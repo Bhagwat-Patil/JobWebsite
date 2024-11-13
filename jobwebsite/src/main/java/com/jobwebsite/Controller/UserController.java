@@ -59,4 +59,31 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Login failed.");
         }
     }
+
+    @PutMapping("/user/update/{id}")
+    public ResponseEntity<String> updateUser(@PathVariable Long id, @RequestBody User user) {
+        try {
+            userService.updateUser(id, user);
+            logger.info("User with ID: {} updated successfully.", id);
+            return ResponseEntity.status(HttpStatus.OK).body("User updated successfully.");
+        } catch (UserAlreadyExistsException e) {
+            logger.error("User update failed: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            logger.error("An unexpected error occurred during user update", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("User update failed.");
+        }
+    }
+
+    @DeleteMapping("/user/delete/{id}")
+    public ResponseEntity<String> deleteUser(@PathVariable Long id) {
+        try {
+            userService.deleteUser(id);
+            logger.info("User with ID: {} deleted successfully.", id);
+            return ResponseEntity.status(HttpStatus.OK).body("User deleted successfully.");
+        } catch (Exception e) {
+            logger.error("An unexpected error occurred during user deletion", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("User deletion failed.");
+        }
+    }
 }

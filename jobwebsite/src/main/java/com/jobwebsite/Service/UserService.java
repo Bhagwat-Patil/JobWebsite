@@ -7,4 +7,6 @@ import com.jobwebsite.Exception.UserAlreadyExistsException;
 public interface UserService {
     User registerUser(User user) throws UserAlreadyExistsException;
     User loginUser(String username, String password) throws InvalidCredentialsException;
+    User updateUser(Long id, User user) throws UserAlreadyExistsException;
+    void deleteUser(Long id);
 }
