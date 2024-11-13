@@ -42,6 +42,48 @@ public class UserServiceImpl implements UserService {
         return user;
     }
 
+    @Override
+    public User updateUser(Long id, User user) throws UserAlreadyExistsException {
+        logger.info("Attempting to update user with ID: {}", id);
+
+        User existingUser = userRepository.findById(id).orElseThrow(() ->
+                new IllegalArgumentException("User not found with ID: " + id)
+        );
+
+        if (!existingUser.getUserName().equals(user.getUserName()) && userRepository.findByUserName(user.getUserName()) != null) {
+            throw new UserAlreadyExistsException("Username already exists.");
+        }
+
+        if (!existingUser.getEmailId().equals(user.getEmailId()) && userRepository.findByEmailId(user.getEmailId()) != null) {
+            throw new UserAlreadyExistsException("Email ID already in use.");
+        }
+
+        existingUser.setUserName(user.getUserName());
+        existingUser.setFullName(user.getFullName());
+        existingUser.setEmailId(user.getEmailId());
+        existingUser.setPassword(user.getPassword());
+        existingUser.setGender(user.getGender());
+        existingUser.setMobileNo(user.getMobileNo());
+
+        User updatedUser = userRepository.save(existingUser);
+        logger.info("User with ID: {} updated successfully.", updatedUser.getId());
+
+        return updatedUser;
+    }
+
+    @Override
+    public void deleteUser(Long id) {
+        logger.info("Attempting to delete user with ID: {}", id);
+
+        // Check if the user exists
+        User user = userRepository.findById(id).orElseThrow(() ->
+                new IllegalArgumentException("User not found with ID: " + id)
+        );
+
+        userRepository.deleteById(id);
+        logger.info("User with ID: {} deleted successfully.", id);
+    }
+
     private void validateUser(User user) throws UserAlreadyExistsException {
         if (userRepository.findByUserName(user.getUserName()) != null) {
             String message = String.format("Registration failed: Username '%s' is already taken.", user.getUserName());
