@@ -1,7 +1,6 @@
 package com.jobwebsite.Entity;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import lombok.*;
 
