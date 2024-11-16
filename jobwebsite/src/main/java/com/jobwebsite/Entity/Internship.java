@@ -1,5 +1,4 @@
-package com.jobwebsite.Entity;//class job
-
+package com.jobwebsite.Entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
@@ -15,18 +14,30 @@ import java.time.LocalDateTime;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Job {
+public class Internship {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String title;
+
+    @Column(nullable = false)
+    private String company;
+
+    @Column(nullable = false)
     private String location;
-    private String category;
-    private String employmentType;
-    private String workModel;
-    private String experience;
-    private Double salary;
+
+    private String duration;
+
+    private String stipend;
+
+    @Column(nullable = false)
+    private String qualifications;
+
+    @Lob
+    private String description;
 
     @Column(nullable = false)
     private String status;
@@ -37,10 +48,9 @@ public class Job {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    @ManyToOne
-    @JoinColumn(name = "admin_id")
-    @JsonBackReference("admin-jobs")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "admin_id", nullable = false)
+    @JsonBackReference
     private Admin admin;
 
 }
-

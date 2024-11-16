@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jobwebsite.Entity.Admin;
 import com.jobwebsite.Entity.Form;
+import com.jobwebsite.Entity.Internship;
 import com.jobwebsite.Entity.Job;
 import com.jobwebsite.Exception.AdminNotFoundException;
 import com.jobwebsite.Exception.UserNotFoundException;
@@ -48,8 +49,6 @@ public class AdminController {
                 admin.setProfilePicture(null);
             }
 
-
-
             // Register the admin
             String message = adminService.registerAdmin(admin);
             return ResponseEntity.status(HttpStatus.OK).body("Successfully registered Admin");
@@ -84,7 +83,7 @@ public class AdminController {
         }
     }
 
-    @PutMapping("/update/{adminId}")
+    @PutMapping("/updateAdmin/{adminId}")
     public ResponseEntity<?> updateAdmin(
             @PathVariable Long adminId,
             @RequestPart("adminData") String adminData,
@@ -113,7 +112,7 @@ public class AdminController {
         }
     }
 
-    @DeleteMapping("/delete/{adminId}")
+    @DeleteMapping("/deleteAdmin/{adminId}")
     public ResponseEntity<?> deleteAdmin(@PathVariable Long adminId) {
         try {
             if (adminId == null) {
@@ -128,16 +127,63 @@ public class AdminController {
         }
     }
 
-    @PostMapping("/JobPost")
-    public ResponseEntity<String> jobPost(@RequestBody Admin admin)
-    {
-        ObjectMapper objectMapper = new ObjectMapper();
-        adminService.jobpost(admin);
-        return ResponseEntity.status(HttpStatus.OK).body("Job posted successfully");
+    @GetMapping("/getAdminById/{adminId}")
+    public ResponseEntity<Admin> getAdminById(@PathVariable Long adminId) {
+        try {
+            Admin admin = adminService.getAdminById(adminId);
+            return new ResponseEntity<>(admin, HttpStatus.OK);
+        } catch (AdminNotFoundException e) {
+            logger.error("Admin not found: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        } catch (Exception e) {
+            logger.error("Error occurred while fetching admin: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
+    @GetMapping("/getAllAdmins")
+    public ResponseEntity<List<Admin>> getAllAdmins() {
+        try {
+            logger.info("Fetching all admins...");
+            List<Admin> admins = adminService.getAllAdmins();
+            return new ResponseEntity<>(admins, HttpStatus.OK);
+        } catch (Exception e) {
+            logger.error("Error while fetching all admins: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
+
+    @PostMapping("/JobPost/{adminId}")
+    public ResponseEntity<String> jobPost(@PathVariable Long adminId, @RequestBody Job job) {
+        try {
+            logger.info("Received request to post job by adminId: {}", adminId);
+            String result = adminService.jobpost(job, adminId);
+            return ResponseEntity.status(HttpStatus.CREATED).body(result);
+        } catch (AdminNotFoundException e) {
+            logger.error("Admin not found with ID: {}", adminId, e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            logger.error("Error posting job: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error posting job");
+        }
+    }
+
+
+    @PostMapping("/postInternship/{adminId}")
+    public ResponseEntity<String> postInternship(@PathVariable Long adminId, @RequestBody Internship internship) {
+        try {
+            String result = adminService.postInternship(internship, adminId);
+            return ResponseEntity.status(HttpStatus.CREATED).body(result);
+        } catch (AdminNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            logger.error("Error posting internship: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error posting internship");
+        }
     }
 
     // to get All User forms
-
     @GetMapping("/form/getAllForms")
     public ResponseEntity<List<Form>> getAllForms() {
 
@@ -161,7 +207,6 @@ public class AdminController {
         }
     }
 
-//
 
     @GetMapping("/job/getAllJobs")
     public ResponseEntity<List<Job>> getAllJobsUploadedByAdmin() {

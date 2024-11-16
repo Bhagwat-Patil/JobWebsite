@@ -1,5 +1,6 @@
 package com.jobwebsite.Controller;
 
+import com.jobwebsite.Entity.Internship;
 import com.jobwebsite.Entity.User;
 import com.jobwebsite.Exception.InvalidCredentialsException;
 import com.jobwebsite.Exception.UserAlreadyExistsException;
@@ -10,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
@@ -86,4 +89,39 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("User deletion failed.");
         }
     }
+
+    @GetMapping("/getAllUsers")
+    public ResponseEntity<List<User>> getAllUsers() {
+        try {
+            List<User> users = userService.getAllUsers();
+            logger.info("Fetched all users.");
+            return ResponseEntity.ok(users);
+        } catch (Exception e) {
+            logger.error("An unexpected error occurred while fetching all users", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
+    @GetMapping("/getUserById/{id}")
+    public ResponseEntity<User> getUserById(@PathVariable Long id) {
+        try {
+            User user = userService.getUserById(id);
+            return ResponseEntity.status(HttpStatus.OK).body(user);
+        } catch (Exception e) {
+            logger.error("An unexpected error occurred while fetching the user", e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+    }
+
+    @GetMapping("/getUserByStatus/{status}")
+    public List<User> getUserByStatus(@PathVariable String status) {
+        try {
+            logger.info("Fetching Users with status: {}", status);
+            return userService.getUserByStatus(status);
+        } catch (Exception e) {
+            logger.error("Error in fetching Users with status {}: {}", status, e.getMessage(), e);
+            throw e;
+        }
+    }
+
 }
