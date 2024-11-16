@@ -37,4 +37,7 @@ public class User {
     @NotNull
     @Column(unique = true)
     private String mobileNo;
+
+    @Column(nullable = false)
+    private String status;
 }

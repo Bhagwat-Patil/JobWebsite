@@ -29,6 +29,7 @@ public interface JobRepository extends JpaRepository<Job,Long> {
             @Param("experience") String experience
     );
 
-//    List<Job> findByJobTitle(String jobTitle);
+    List<Job> findByStatus(String status);
+    List<Job> findByAdminId(Long adminId);
 }
 

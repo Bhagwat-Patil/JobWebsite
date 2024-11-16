@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.util.List;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -64,7 +65,7 @@ public class UserServiceImpl implements UserService {
         existingUser.setPassword(user.getPassword());
         existingUser.setGender(user.getGender());
         existingUser.setMobileNo(user.getMobileNo());
-
+        existingUser.setStatus(user.getStatus());
         User updatedUser = userRepository.save(existingUser);
         logger.info("User with ID: {} updated successfully.", updatedUser.getId());
 
@@ -82,6 +83,31 @@ public class UserServiceImpl implements UserService {
 
         userRepository.deleteById(id);
         logger.info("User with ID: {} deleted successfully.", id);
+    }
+
+    @Override
+    public List<User> getAllUsers() {
+        logger.info("Fetching all users.");
+        return userRepository.findAll();
+    }
+
+    @Override
+    public User getUserById(Long id) {
+        logger.info("Fetching user with ID: {}", id);
+        return userRepository.findById(id).orElseThrow(() ->
+                new IllegalArgumentException("User not found with ID: " + id)
+        );
+    }
+
+    @Override
+    public List<User> getUserByStatus(String status) {
+        try {
+            logger.info("Fetching Users with status: {}", status);
+            return userRepository.findByStatus(status);
+        } catch (Exception e) {
+            logger.error("Error while fetching Users with status {}: {}", status, e.getMessage(), e);
+            throw e;
+        }
     }
 
     private void validateUser(User user) throws UserAlreadyExistsException {

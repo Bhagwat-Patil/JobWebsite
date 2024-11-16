@@ -37,11 +37,14 @@ public class Admin {
     private byte[] profilePicture;
 
     @OneToMany(mappedBy ="admin" ,cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonManagedReference
+    @JsonManagedReference("admin-forms")
     private List<Form> form;
 
     @OneToMany(mappedBy ="admin" ,cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonManagedReference
+    @JsonManagedReference("admin-jobs")
     private List<Job> job;
 
+    @OneToMany(mappedBy = "admin")
+    @JsonManagedReference  // Serialize this side of the relationship
+    private List<Internship> internships;
 }

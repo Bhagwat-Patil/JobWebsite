@@ -1,6 +1,5 @@
 package com.jobwebsite.ServiceImpl;
 
-//job serviceimpl
 import com.jobwebsite.Entity.Job;
 import com.jobwebsite.Exception.InvalidJobDataException;
 import com.jobwebsite.Exception.JobNotFoundException;
@@ -10,8 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class JobServiceImpl implements JobService {
@@ -71,7 +70,7 @@ public class JobServiceImpl implements JobService {
             job.setCategory(jobDetails.getCategory());
             job.setEmploymentType(jobDetails.getEmploymentType());
             job.setWorkModel(jobDetails.getWorkModel());
-
+            job.setStatus(jobDetails.getStatus());
             logger.info("Updating job with id: {}", id);
             return jobRepository.save(job);
         } catch (Exception e) {
@@ -95,6 +94,40 @@ public class JobServiceImpl implements JobService {
             logger.error("Failed to delete job with id: {}", id, e);
             throw e;
         }
+    }
+
+    @Override
+    public Job getJobById(Long id) {
+        logger.info("Fetching job with ID: {}", id);
+        Optional<Job> job = jobRepository.findById(id);
+        if (job.isPresent()) {
+            return job.get();
+        } else {
+            logger.error("Job with ID {} not found.", id);
+            throw new JobNotFoundException("Job with ID " + id + " not found.");
+        }
+    }
+
+    @Override
+    public List<Job> getJobsByStatus(String status) {
+        logger.info("Fetching jobs with status: {}", status);
+        List<Job> jobs = jobRepository.findByStatus(status);
+        if (jobs.isEmpty()) {
+            logger.warn("No jobs found with status: {}", status);
+            throw new JobNotFoundException("No jobs found with status " + status);
+        }
+        return jobs;
+    }
+
+    @Override
+    public List<Job> getJobsByAdminId(Long adminId) {
+        logger.info("Fetching jobs for Admin ID: {}", adminId);
+        List<Job> jobs = jobRepository.findByAdminId(adminId);
+        if (jobs.isEmpty()) {
+            logger.warn("No jobs found for Admin ID: {}", adminId);
+            throw new JobNotFoundException("No jobs found for Admin ID " + adminId);
+        }
+        return jobs;
     }
 }
 
