@@ -36,6 +36,8 @@ public class Internship {
     @Column(nullable = false)
     private String qualifications;
 
+    private String skills;
+
     @Lob
     private String description;
 

@@ -71,6 +71,9 @@ public class JobServiceImpl implements JobService {
             job.setEmploymentType(jobDetails.getEmploymentType());
             job.setWorkModel(jobDetails.getWorkModel());
             job.setStatus(jobDetails.getStatus());
+            job.setCompany(jobDetails.getCompany());
+            job.setSkills(jobDetails.getSkills());
+            job.setJobDescription(jobDetails.getJobDescription());
             logger.info("Updating job with id: {}", id);
             return jobRepository.save(job);
         } catch (Exception e) {

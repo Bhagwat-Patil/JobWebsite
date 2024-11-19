@@ -103,6 +103,8 @@ public class InternshipServiceImpl implements InternshipService {
                 existingInternship.setStipend(updatedInternship.getStipend());
                 existingInternship.setQualifications(updatedInternship.getQualifications());
                 existingInternship.setStatus(updatedInternship.getStatus());
+                existingInternship.setSkills(updatedInternship.getSkills());
+                existingInternship.setDescription(updatedInternship.getDescription());
                 logger.info("Internship with ID {} updated successfully.", id);
                 return internshipRepository.save(existingInternship);
             } else {
