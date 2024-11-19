@@ -27,6 +27,13 @@ public class Job {
     private String workModel;
     private String experience;
     private Double salary;
+    private String skills;
+
+    @Column(nullable = false)
+    private String company;
+
+    @Lob
+    private String jobDescription;
 
     @Column(nullable = false)
     private String status;
