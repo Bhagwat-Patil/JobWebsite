@@ -1,14 +1,18 @@
 package com.jobwebsite.ServiceImpl;
 
+import com.jobwebsite.Entity.Admin;
 import com.jobwebsite.Entity.Job;
 import com.jobwebsite.Exception.InvalidJobDataException;
 import com.jobwebsite.Exception.JobNotFoundException;
+import com.jobwebsite.Repository.AdminRepository;
 import com.jobwebsite.Repository.JobRepository;
 import com.jobwebsite.Service.JobService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,26 +24,58 @@ public class JobServiceImpl implements JobService {
     @Autowired
     private final JobRepository jobRepository;
 
-    public JobServiceImpl(JobRepository jobRepository) {
+    @Autowired
+    private final AdminRepository adminRepository;
+
+    public JobServiceImpl(JobRepository jobRepository, AdminRepository adminRepository) {
         this.jobRepository = jobRepository;
+        this.adminRepository = adminRepository;
     }
 
+
     @Override
-    public Job saveJob(Job job) {
+    public Job saveJob(Job job, Long adminId) {
         try {
+            // Validation checks for Job data
             if (job.getTitle() == null || job.getTitle().isEmpty()) {
                 logger.error("Invalid job data: Title cannot be empty");
                 throw new InvalidJobDataException("Job title cannot be empty");
             }
-            logger.info("Saving job: {}", job);
+            if (job.getOpeningStartDate() == null) {
+                logger.error("Invalid job data: Opening start date is required");
+                throw new InvalidJobDataException("Opening start date is required");
+            }
+            if (job.getLastApplyDate() == null) {
+                logger.error("Invalid job data: Last apply date is required");
+                throw new InvalidJobDataException("Last apply date is required");
+            }
+            if (job.getNumberOfOpenings() == null || job.getNumberOfOpenings() <= 0) {
+                logger.error("Invalid job data: Number of openings must be greater than zero");
+                throw new InvalidJobDataException("Number of openings must be greater than zero");
+            }
+
+            // Fetch the Admin entity using adminId
+            Admin admin = adminRepository.findById(adminId).orElseThrow(() ->
+                    new InvalidJobDataException("Admin not found with id: " + adminId));
+
+            // Set the Admin entity to the Job
+            job.setAdmin(admin);
+
+            // Save job with the provided adminId
+            logger.info("Saving job: {} by Admin ID: {}", job, adminId);
             return jobRepository.save(job);
-        } catch (Exception e) {
-            logger.error("Failed to save job: {}", job, e);
-            throw e;
+
         } catch (InvalidJobDataException e) {
-            throw new RuntimeException(e);
+            // Handling validation-specific exceptions
+            logger.error("Validation failed while saving job: {}", e.getMessage());
+            return null; // Return a meaningful response or rethrow as RuntimeException if needed
+        } catch (Exception e) {
+            // Handling generic exceptions
+            logger.error("Failed to save job due to unexpected error: {}", e.getMessage(), e);
+            throw new RuntimeException("An unexpected error occurred while saving the job", e);
         }
-    }
+}
+
 
     @Override
     public List<Job> getAllJobs() {
@@ -53,9 +89,30 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    public List<Job> searchJobs(String title, String location, String category, String employmentType, String workModel, String salary, String experience) {
-        return jobRepository.findJobsByCriteria(title, location, category, employmentType, workModel, salary, experience);
+    public List<Job> searchJobs(
+            String title,
+            String location,
+            String category,
+            String employmentType,
+            String workModel,
+            String salary,
+            String experience,
+            LocalDate openingStartDate,
+            LocalDate lastApplyDate
+    ) {
+        return jobRepository.findJobsByCriteria(
+                title,
+                location,
+                category,
+                employmentType,
+                workModel,
+                salary,
+                experience,
+                openingStartDate,
+                lastApplyDate
+        );
     }
+
 
     @Override
     public Job updateJob(Long id, Job jobDetails) {
@@ -74,6 +131,12 @@ public class JobServiceImpl implements JobService {
             job.setCompany(jobDetails.getCompany());
             job.setSkills(jobDetails.getSkills());
             job.setJobDescription(jobDetails.getJobDescription());
+            job.setUpdatedAt(jobDetails.getUpdatedAt());
+            job.setOpeningStartDate(jobDetails.getOpeningStartDate());
+            job.setLastApplyDate(jobDetails.getLastApplyDate());
+            job.setNumberOfOpenings(jobDetails.getNumberOfOpenings());
+            job.setPerks(jobDetails.getPerks());
+            job.setCompanyDescription(jobDetails.getCompanyDescription());
             logger.info("Updating job with id: {}", id);
             return jobRepository.save(job);
         } catch (Exception e) {

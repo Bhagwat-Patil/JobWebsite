@@ -1,14 +1,18 @@
 package com.jobwebsite.Controller;
 
 import com.jobwebsite.Entity.Job;
+import com.jobwebsite.Exception.InvalidJobDataException;
 import com.jobwebsite.Service.JobService;
 import com.jobwebsite.Exception.JobNotFoundException; // Ensure that the custom exception is imported
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -25,18 +29,22 @@ public class JobController {
         this.jobService = jobService;
     }
 
-    // Save a job
-    @PostMapping("/saveJobs")
-    public ResponseEntity<Job> saveJob(@RequestBody Job job) {
+
+    @PostMapping("/saveJob/{adminId}")
+    public ResponseEntity<Job> saveJob(@PathVariable Long adminId, @RequestBody Job job) {
         try {
-            logger.info("Received request to save job");
-            Job savedJob = jobService.saveJob(job);
-            return new ResponseEntity<>(savedJob, HttpStatus.CREATED);  // Returns 201 status for a created resource
+            logger.info("Received request to save job with adminId: {}", adminId);
+            Job savedJob = jobService.saveJob(job, adminId);
+            if (savedJob == null) {
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            }
+            return new ResponseEntity<>(savedJob, HttpStatus.CREATED);
         } catch (Exception e) {
             logger.error("Error while saving job: {}", e.getMessage(), e);
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);  // Returns 500 status for server error
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
 
     // Get all jobs
     @GetMapping("/getAllJobs")
@@ -60,17 +68,25 @@ public class JobController {
             @RequestParam(required = false) String employmentType,
             @RequestParam(required = false) String workModel,
             @RequestParam(required = false) String salary,
-            @RequestParam(required = false) String experience) {
+            @RequestParam(required = false) String experience,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate openingStartDate, // Added openingStartDate
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate lastApplyDate // Added lastApplyDate
+    ) {
         try {
-            logger.info("Received request to search jobs with parameters: title={}, location={}, category={}, employmentType={}",
-                    title, location, category, employmentType);
-            List<Job> jobs = jobService.searchJobs(title, location, category, employmentType, workModel, salary, experience);
+            logger.info("Received request to search jobs with parameters: title={}, location={}, category={}, employmentType={}, openingStartDate={}, lastApplyDate={}",
+                    title, location, category, employmentType, openingStartDate, lastApplyDate);
+
+            List<Job> jobs = jobService.searchJobs(
+                    title, location, category, employmentType, workModel, salary, experience, openingStartDate, lastApplyDate
+            );
+
             return new ResponseEntity<>(jobs, HttpStatus.OK);  // Returns 200 status
         } catch (Exception e) {
             logger.error("Error while searching jobs: {}", e.getMessage(), e);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);  // Returns 500 status for server error
         }
     }
+
 
     // Update a job
     @PutMapping("/updateJob/{id}")

@@ -23,10 +23,27 @@ public class InternshipServiceImpl implements InternshipService {
     @Autowired
     private AdminRepository adminRepository;
 
+
     @Override
     public Internship createInternship(Internship internship, Long adminId) {
         try {
             logger.info("Attempting to create internship for Admin ID: {}", adminId);
+
+            // Validate new fields
+            if (internship.getOpeningStartDate() == null) {
+                logger.error("Invalid internship data: Opening start date is required.");
+                throw new RuntimeException("Opening start date is required.");
+            }
+            if (internship.getLastApplyDate() == null) {
+                logger.error("Invalid internship data: Last apply date is required.");
+                throw new RuntimeException("Last apply date is required.");
+            }
+            if (internship.getNumberOfOpenings() == null || internship.getNumberOfOpenings() <= 0) {
+                logger.error("Invalid internship data: Number of openings must be greater than zero.");
+                throw new RuntimeException("Number of openings must be greater than zero.");
+            }
+
+            // Fetch admin and set relationship
             Optional<Admin> adminOptional = adminRepository.findById(adminId);
             if (adminOptional.isPresent()) {
                 Admin admin = adminOptional.get();
@@ -43,6 +60,7 @@ public class InternshipServiceImpl implements InternshipService {
             throw e;
         }
     }
+
 
     @Override
     public List<Internship> getAllInternships() {
@@ -105,6 +123,12 @@ public class InternshipServiceImpl implements InternshipService {
                 existingInternship.setStatus(updatedInternship.getStatus());
                 existingInternship.setSkills(updatedInternship.getSkills());
                 existingInternship.setDescription(updatedInternship.getDescription());
+                existingInternship.setUpdatedAt(updatedInternship.getUpdatedAt());
+                existingInternship.setOpeningStartDate(updatedInternship.getOpeningStartDate());
+                existingInternship.setLastApplyDate(updatedInternship.getLastApplyDate());
+                existingInternship.setNumberOfOpenings(updatedInternship.getNumberOfOpenings());
+                existingInternship.setPerks(updatedInternship.getPerks());
+                existingInternship.setCompanyDescription(updatedInternship.getCompanyDescription());
                 logger.info("Internship with ID {} updated successfully.", id);
                 return internshipRepository.save(existingInternship);
             } else {
