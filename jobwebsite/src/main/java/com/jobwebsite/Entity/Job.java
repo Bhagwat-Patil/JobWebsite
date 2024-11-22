@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -43,6 +44,15 @@ public class Job {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    // Newly added fields
+    private LocalDate openingStartDate;
+    private LocalDate lastApplyDate;
+    private Integer numberOfOpenings;
+    private String perks;
+
+    @Lob
+    private String companyDescription;
 
     @ManyToOne
     @JoinColumn(name = "admin_id")
