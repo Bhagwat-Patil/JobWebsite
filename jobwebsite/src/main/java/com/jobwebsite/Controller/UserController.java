@@ -44,15 +44,14 @@ public class UserController {
     }
 
     @PostMapping("/user/login")
-    public ResponseEntity<String> loginUser(@RequestParam String username, @RequestParam String password) {
+    public ResponseEntity<String> loginUser(@RequestBody User user)  {
         try {
-            if (username.isEmpty() || password.isEmpty()) {
+            if (user.getUserName().isEmpty() || user.getPassword().isEmpty()) {
                 logger.error("Invalid login credentials provided");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid login credentials.");
             }
-            
-            userService.loginUser(username, password);
-            logger.info("User logged in successfully with username: {}", username);
+            userService.loginUser(user.getUserName(), user.getPassword());
+            logger.info("User logged in successfully with username: {}", user.getUserName());
             return ResponseEntity.ok("Login successful.");
         } catch (InvalidCredentialsException e) {
             logger.error("User login failed: {}", e.getMessage());
