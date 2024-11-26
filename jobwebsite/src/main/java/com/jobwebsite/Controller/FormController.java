@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/forms")
@@ -135,6 +136,24 @@ public class FormController {
             logger.error("Error downloading CV: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error downloading CV.".getBytes());
+        }
+    }
+
+    @GetMapping("/getAllForms")
+    public ResponseEntity<List<Form>> getAllForms() {
+        logger.info("Received request to fetch all forms.");
+        try {
+            List<Form> forms = formService.getAllForms();
+            if (forms.isEmpty()) {
+                logger.warn("No forms found in the database.");
+                return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+            }
+            logger.info("Returning all forms successfully.");
+            return ResponseEntity.ok(forms);
+        } catch (Exception e) {
+            logger.error("Error fetching all forms: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(null);
         }
     }
 }
