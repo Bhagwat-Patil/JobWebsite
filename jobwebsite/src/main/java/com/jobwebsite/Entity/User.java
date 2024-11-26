@@ -1,10 +1,12 @@
 package com.jobwebsite.Entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import org.antlr.v4.runtime.misc.NotNull;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -40,4 +42,12 @@ public class User {
 
     @Column(nullable = true)
     private String status;
+
+    @ManyToOne
+    @JoinColumn(name = "plan_id")
+    private Plan plan;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @JsonBackReference
+    private List<Payment> payments;
 }

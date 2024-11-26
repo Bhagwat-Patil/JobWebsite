@@ -17,6 +17,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
+import java.util.List;
 
 @Service
 public class FormServiceImpl implements FormService {
@@ -139,5 +140,16 @@ public class FormServiceImpl implements FormService {
         // Fetch the form from the database using the repository
         return formRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Form not found with ID: " + id));  // If not found, throw an exception
+    }
+
+    @Override
+    public List<Form> getAllForms() {
+        try {
+            logger.info("Fetching all forms from the database.");
+            return formRepository.findAll();
+        } catch (DataAccessException ex) {
+            logger.error("Error fetching all forms: {}", ex.getMessage());
+            throw new RuntimeException("Unable to fetch forms. Please try again.");
+        }
     }
 }
