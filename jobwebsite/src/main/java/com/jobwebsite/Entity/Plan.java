@@ -1,6 +1,6 @@
 package com.jobwebsite.Entity;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -23,7 +23,7 @@ public class Plan {
     private List<String> features;
 
     @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL)
-    @JsonBackReference
+    @JsonManagedReference(value = "plan-payments")  // Back-reference for the Payment entity
     private List<Payment> payments;
 
 }
