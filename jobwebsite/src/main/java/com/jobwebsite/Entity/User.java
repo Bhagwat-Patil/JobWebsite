@@ -1,6 +1,7 @@
 package com.jobwebsite.Entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -45,9 +46,10 @@ public class User {
 
     @ManyToOne
     @JoinColumn(name = "plan_id")
+    @JsonBackReference(value = "user-plan")  // This is the back-reference for Plan
     private Plan plan;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    @JsonBackReference
+    @JsonManagedReference(value = "user-payments")  // This is the forward reference for Payments
     private List<Payment> payments;
 }

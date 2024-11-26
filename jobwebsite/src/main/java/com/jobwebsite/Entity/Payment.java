@@ -1,6 +1,6 @@
 package com.jobwebsite.Entity;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -30,12 +30,12 @@ public class Payment {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    @JsonManagedReference
+    @JsonBackReference(value = "user-payments")  // Manage the forward serialization of the User entity
     private User user;
 
     @ManyToOne
     @JoinColumn(name = "plan_id")
-    @JsonManagedReference
+    @JsonBackReference(value = "plan-payments")  // Manage the forward serialization of the Plan entity
     private Plan plan;
 
 }
