@@ -13,4 +13,5 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     // Custom query to fetch payments by planId with JOIN FETCH for related entities
     @Query("SELECT p FROM Payment p JOIN FETCH p.user u JOIN FETCH p.plan pl WHERE p.plan.id = :planId")
     List<Payment> findPaymentsByPlanId(@Param("planId") Long planId);
+    List<Payment> findByPaymentStatus(String status);
 }

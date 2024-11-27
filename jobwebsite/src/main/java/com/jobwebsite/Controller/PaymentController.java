@@ -10,8 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -94,5 +92,34 @@ public class PaymentController {
         }
     }
 
+    @GetMapping("/getAllPayments")
+    public ResponseEntity<?> getAllPayments() {
+        logger.info("Request received for fetching all payments");
+        try {
+            List<Payment> payments = paymentService.getAllPayments();
+            logger.info("Successfully fetched all payments, total count: {}", payments.size());
+            return ResponseEntity.ok(payments);
+        } catch (Exception ex) {
+            logger.error("Error occurred while fetching payments: {}", ex.getMessage());
+            return ResponseEntity.status(500).body("An error occurred while retrieving payments. Please try again later.");
+        }
+    }
+
+    @GetMapping("/getPaymentByStatus/{status}")
+    public ResponseEntity<?> getPaymentsByStatus(@PathVariable("status") String status) {
+        logger.info("Request received to fetch payments with status: {}", status);
+        try {
+            List<Payment> payments = paymentService.getPaymentsByStatus(status);
+            if (payments.isEmpty()) {
+                logger.warn("No payments found with status: {}", status);
+                return ResponseEntity.ok("No payments found with the given status.");
+            }
+            logger.info("Successfully fetched payments with status: {}", status);
+            return ResponseEntity.ok(payments);
+        } catch (Exception ex) {
+            logger.error("Error occurred while fetching payments by status: {}", ex.getMessage());
+            return ResponseEntity.status(500).body("An error occurred while retrieving payments. Please try again later.");
+        }
+    }
 
 }

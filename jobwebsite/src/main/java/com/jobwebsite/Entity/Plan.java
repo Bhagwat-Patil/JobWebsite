@@ -23,7 +23,7 @@ public class Plan {
     private List<String> features;
 
     @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL)
-    @JsonManagedReference(value = "plan-payments")  // Back-reference for the Payment entity
+    @JsonManagedReference(value = "plan-payments")
     private List<Payment> payments;
 
 }

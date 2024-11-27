@@ -30,12 +30,12 @@ public class Payment {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    @JsonBackReference(value = "user-payments")  // Manage the forward serialization of the User entity
+    @JsonBackReference(value = "user-payments")
     private User user;
 
     @ManyToOne
     @JoinColumn(name = "plan_id")
-    @JsonBackReference(value = "plan-payments")  // Manage the forward serialization of the Plan entity
+    @JsonBackReference(value = "plan-payments")
     private Plan plan;
 
 }

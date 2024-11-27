@@ -1,6 +1,5 @@
 package com.jobwebsite.Controller;
 
-import com.jobwebsite.Entity.Internship;
 import com.jobwebsite.Entity.User;
 import com.jobwebsite.Exception.InvalidCredentialsException;
 import com.jobwebsite.Exception.UserAlreadyExistsException;
@@ -11,7 +10,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.util.List;
 
 @RestController

@@ -5,6 +5,8 @@ import com.jobwebsite.Entity.Form;
 import com.jobwebsite.Entity.Job;
 import com.jobwebsite.Entity.Internship;
 import com.jobwebsite.Entity.Admin;
+import com.jobwebsite.Exception.InternshipNotFoundException;
+import com.jobwebsite.Exception.JobNotFoundException;
 import com.jobwebsite.Repository.FormRepository;
 import com.jobwebsite.Repository.JobRepository;
 import com.jobwebsite.Repository.InternshipRepository;
@@ -152,4 +154,45 @@ public class FormServiceImpl implements FormService {
             throw new RuntimeException("Unable to fetch forms. Please try again.");
         }
     }
+
+    @Override
+    public List<Form> getApplicationsByJobId(Long jobId) {
+        logger.info("Fetching applications for Job ID: {}", jobId);
+
+        // Ensure the Job exists
+        if (!jobRepository.existsById(jobId)) {
+            logger.error("Job with ID {} does not exist.", jobId);
+            throw new JobNotFoundException("Job with ID " + jobId + " does not exist.");
+        }
+
+        // Fetch applications
+        List<Form> applications = formRepository.findByJobId(jobId);
+        if (applications.isEmpty()) {
+            logger.warn("No applications found for Job ID: {}", jobId);
+        } else {
+            logger.info("Found {} applications for Job ID: {}", applications.size(), jobId);
+        }
+        return applications;
+    }
+
+    @Override
+    public List<Form> getApplicationsByInternshipId(Long internshipId) {
+        logger.info("Fetching applications for Internship ID: {}", internshipId);
+
+        // Ensure the Internship exists
+        if (!internshipRepository.existsById(internshipId)) {
+            logger.error("Internship with ID {} does not exist.", internshipId);
+            throw new InternshipNotFoundException("Internship with ID " + internshipId + " does not exist.");
+        }
+
+        // Fetch applications
+        List<Form> applications = formRepository.findByInternshipId(internshipId);
+        if (applications.isEmpty()) {
+            logger.warn("No applications found for Internship ID: {}", internshipId);
+        } else {
+            logger.info("Found {} applications for Internship ID: {}", applications.size(), internshipId);
+        }
+        return applications;
+    }
+
 }
