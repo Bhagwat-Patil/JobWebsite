@@ -164,4 +164,30 @@ public class PaymentServiceImpl implements PaymentService {
             throw new RuntimeException("Error occurred while fetching payments", e);
         }
     }
+
+    @Override
+    public List<Payment> getAllPayments() {
+        logger.info("Fetching all payments from the database");
+        try {
+            List<Payment> payments = paymentRepository.findAll();
+            logger.info("Fetched {} payments from the database", payments.size());
+            return payments;
+        } catch (Exception ex) {
+            logger.error("Error fetching payments: {}", ex.getMessage());
+            throw new RuntimeException("Unable to fetch payments at the moment. Please try again later.");
+        }
+    }
+
+    @Override
+    public List<Payment> getPaymentsByStatus(String status) {
+        logger.info("Fetching payments with status: {}", status);
+        try {
+            List<Payment> payments = paymentRepository.findByPaymentStatus(status);
+            logger.info("Found {} payments with status: {}", payments.size(), status);
+            return payments;
+        } catch (Exception ex) {
+            logger.error("Error fetching payments with status '{}': {}", status, ex.getMessage());
+            throw new RuntimeException("Unable to fetch payments for the given status. Please try again later.");
+        }
+    }
 }

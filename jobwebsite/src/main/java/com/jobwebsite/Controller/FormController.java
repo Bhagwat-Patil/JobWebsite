@@ -45,7 +45,6 @@ public class FormController {
         this.formRepository = formRepository;
     }
 
-    // Endpoint to save the form with optional CV file
     @PostMapping("/form/saveForm")
     public ResponseEntity<String> saveForm(@RequestPart("formData") String formData,
                                            @RequestPart(value = "cv", required = false) MultipartFile multipartFile) throws JsonProcessingException {
@@ -154,6 +153,38 @@ public class FormController {
             logger.error("Error fetching all forms: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(null);
+        }
+    }
+
+    @GetMapping("/getApplicationsByJob/{jobId}")
+    public ResponseEntity<List<Form>> getApplicationsByJob(@PathVariable Long jobId) {
+        logger.info("Fetching applications for job ID: {}", jobId);
+        try {
+            List<Form> applications = formService.getApplicationsByJobId(jobId);
+            if (applications.isEmpty()) {
+                logger.warn("No applications found for job ID: {}", jobId);
+                return ResponseEntity.noContent().build();
+            }
+            return ResponseEntity.ok(applications);
+        } catch (Exception e) {
+            logger.error("Error fetching applications for job ID {}: {}", jobId, e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @GetMapping("/getApplicationsByInternship/{internshipId}")
+    public ResponseEntity<List<Form>> getApplicationsByInternship(@PathVariable Long internshipId) {
+        logger.info("Fetching applications for internship ID: {}", internshipId);
+        try {
+            List<Form> applications = formService.getApplicationsByInternshipId(internshipId);
+            if (applications.isEmpty()) {
+                logger.warn("No applications found for internship ID: {}", internshipId);
+                return ResponseEntity.noContent().build();
+            }
+            return ResponseEntity.ok(applications);
+        } catch (Exception e) {
+            logger.error("Error fetching applications for internship ID {}: {}", internshipId, e.getMessage());
+            return ResponseEntity.internalServerError().build();
         }
     }
 }

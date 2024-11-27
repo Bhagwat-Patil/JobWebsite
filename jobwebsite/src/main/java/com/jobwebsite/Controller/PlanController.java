@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RestController
@@ -34,7 +33,7 @@ public class PlanController {
             return ResponseEntity.status(500).body(null);
         }
     }
-    // Get all plans
+
     @GetMapping("/getAllPlans")
     public ResponseEntity<List<Plan>> getAllPlans() {
         try {
@@ -52,7 +51,6 @@ public class PlanController {
         }
     }
 
-    // Get a specific plan by ID
     @GetMapping("/getPlanById/{id}")
     public ResponseEntity<Plan> getPlanById(@PathVariable Long id) {
         try {
@@ -70,7 +68,6 @@ public class PlanController {
         }
     }
 
-    // Get users enrolled in a specific plan
     @GetMapping("/getUsersEnrolledInPlan/{planId}")
     public ResponseEntity<List<User>> getUsersEnrolledInPlan(@PathVariable Long planId) {
         try {

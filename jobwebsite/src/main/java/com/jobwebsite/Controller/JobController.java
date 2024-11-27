@@ -46,7 +46,6 @@ public class JobController {
     }
 
 
-    // Get all jobs
     @GetMapping("/getAllJobs")
     public ResponseEntity<List<Job>> getAllJobs() {
         try {
@@ -87,8 +86,6 @@ public class JobController {
         }
     }
 
-
-    // Update a job
     @PutMapping("/updateJob/{id}")
     public ResponseEntity<Job> updateJob(@PathVariable Long id, @RequestBody Job jobDetails) {
         try {
@@ -104,7 +101,6 @@ public class JobController {
         }
     }
 
-    // Delete a job
     @DeleteMapping("/deleteJobById/{id}")
     public ResponseEntity<String> deleteJob(@PathVariable Long id) {
         try {
@@ -120,7 +116,7 @@ public class JobController {
         }
     }
 
-    // Get job by ID
+
     @GetMapping("/getJobById/{id}")
     public ResponseEntity<Job> getJobById(@PathVariable Long id) {
         try {
@@ -133,7 +129,6 @@ public class JobController {
         }
     }
 
-    // Get jobs by status
     @GetMapping("/getJobsByStatus/{status}")
     public ResponseEntity<List<Job>> getJobsByStatus(@PathVariable String status) {
         try {
@@ -146,7 +141,6 @@ public class JobController {
         }
     }
 
-    // Get jobs by Admin ID
     @GetMapping("/getJobsByAdmin/{adminId}")
     public ResponseEntity<List<Job>> getJobsByAdminId(@PathVariable Long adminId) {
         try {

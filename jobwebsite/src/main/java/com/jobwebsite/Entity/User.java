@@ -46,10 +46,10 @@ public class User {
 
     @ManyToOne
     @JoinColumn(name = "plan_id")
-    @JsonBackReference(value = "user-plan")  // This is the back-reference for Plan
+    @JsonBackReference(value = "user-plan")
     private Plan plan;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    @JsonManagedReference(value = "user-payments")  // This is the forward reference for Payments
+    @JsonManagedReference(value = "user-payments")
     private List<Payment> payments;
 }

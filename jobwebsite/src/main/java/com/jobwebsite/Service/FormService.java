@@ -16,4 +16,8 @@ public interface FormService {
     Form getFormById(Long id);
 
     List<Form> getAllForms();
+
+    List<Form> getApplicationsByJobId(Long jobId);
+
+    List<Form> getApplicationsByInternshipId(Long internshipId);
 }
