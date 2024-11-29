@@ -39,53 +39,51 @@ public class AdminServiceImpl implements AdminService {
     @Autowired
     private InternshipRepository internshipRepository;
 
+
     @Override
-    @Transactional
     public String registerAdmin(Admin admin) {
-        logger.info("Registering admin with username: {}", admin.getUsername());
-
-        validateAdminData(admin);
-
-        // Check if the username or email already exists
-        if (adminRepository.existsByUsername(admin.getUsername()) || adminRepository.existsByEmail(admin.getEmail()) || adminRepository.existsByMobileNo(admin.getMobileNo())) {
-            logger.error("Admin with username {} or email {} or mobile number {} already exists", admin.getUsername(), admin.getEmail(), admin.getMobileNo());
-            throw new RuntimeException("Admin with this username or email or mobile number already exists");
+        try {
+            logger.info("Registering new admin: {}", admin.getUsername());
+            // Set the approved field to false by default
+            admin.setApproved(false);
+            adminRepository.save(admin);
+            logger.info("Admin registered successfully: {}", admin.getUsername());
+            return "Admin registered successfully. Waiting for Super Admin approval.";
+        } catch (Exception e) {
+            logger.error("Error registering admin: {}", e.getMessage());
+            throw new RuntimeException("Error registering admin: " + e.getMessage());
         }
-
-        // Handle profile picture
-        if (admin.getProfilePicture() != null && admin.getProfilePicture().length > 0) {
-            logger.info("Profile picture uploaded for admin with username: {}", admin.getUsername());
-            admin.setProfilePicture(admin.getProfilePicture());
-        } else {
-            logger.info("No profile picture provided for admin with username: {}", admin.getUsername());
-            admin.setProfilePicture(null);
-        }
-        // Save the admin entity
-        Admin savedAdmin = adminRepository.save(admin);
-        logger.info("Successfully registered admin with ID: {}", savedAdmin.getId());
-        // Return a success message
-        return "Admin registered successfully.";
     }
 
     @Override
     public String loginAdmin(String username, String password) {
-        logger.info("Admin login attempt for username: {}", username);
+        try {
+            logger.info("Attempting login for admin: {}", username);
 
-        Admin admin = adminRepository.findByUsername(username)
-                .orElseThrow(() -> {
-                    logger.error("Admin not found with username: {}", username);
-                    return new RuntimeException("Admin not found");
-                });
+            // Fetch admin by username
+            Admin admin = adminRepository.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("Admin not found!"));
 
-        // Direct password comparison without encoding
-        if (password.equals(admin.getPassword())) {
-            logger.info("Login successful for username: {}", username);
+            // Validate password
+            if (!admin.getPassword().equals(password)) {
+                logger.warn("Invalid credentials for admin: {}", username);
+                throw new RuntimeException("Invalid credentials.");
+            }
+
+            // Check approval status
+            if (!admin.isApproved()) {
+                logger.warn("Admin not approved by Super Admin: {}", username);
+                throw new RuntimeException("Admin not approved by Super Admin.");
+            }
+
+            logger.info("Admin login successful: {}", username);
             return "Login successful!";
-        } else {
-            logger.error("Invalid credentials for username: {}", username);
-            throw new RuntimeException("Invalid credentials");
+        } catch (Exception e) {
+            logger.error("Error during admin login: {}", e.getMessage());
+            throw new RuntimeException("Error during login: " + e.getMessage());
         }
     }
+
 
     @Override
     @Transactional

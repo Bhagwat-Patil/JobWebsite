@@ -8,6 +8,7 @@ import com.jobwebsite.Entity.Internship;
 import com.jobwebsite.Entity.Job;
 import com.jobwebsite.Exception.AdminNotFoundException;
 import com.jobwebsite.Exception.UserNotFoundException;
+import com.jobwebsite.Repository.AdminRepository;
 import com.jobwebsite.Service.AdminService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -28,59 +30,49 @@ public class AdminController {
     @Autowired
     private AdminService adminService;
 
-    @PostMapping("/register")
-    public ResponseEntity<String> registerAdmin(@RequestPart("adminData") String adminData,
-                                                @RequestPart(value = "profilePicture", required = false) MultipartFile multipartFile) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        try {
-            // Parse the admin data from JSON
-            Admin admin = objectMapper.readValue(adminData, Admin.class);
+    @Autowired
+    private AdminRepository adminRepository;
 
-            // Handle profile picture upload if provided
-            if (multipartFile != null && !multipartFile.isEmpty()) {
-                String contentType = multipartFile.getContentType();
-                if (contentType != null && isValidImageType(contentType)) {
-                    admin.setProfilePicture(multipartFile.getBytes());
-                }else {
-                    return ResponseEntity.badRequest().body("Invalid profile picture format. Only JPEG and PNG are supported.");
-                }
-            } else {
-                admin.setProfilePicture(null);
+
+    @PostMapping("/registerAdmin")
+    public ResponseEntity<String> registerAdmin(@RequestBody Admin admin) {
+        try {
+            // Set default values
+            admin.setApproved(false); // Not approved by default
+            adminRepository.save(admin); // Save admin to the database
+
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body("Admin registered successfully. Waiting for Super Admin approval.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error registering admin: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/loginAdmin")
+    public ResponseEntity<String> loginAdmin(@RequestBody Map<String, String> credentials) {
+        try {
+            String username = credentials.get("username");
+            String password = credentials.get("password");
+
+            if (username == null || password == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Username and password are required.");
             }
 
-            // Register the admin
-            String message = adminService.registerAdmin(admin);
-            return ResponseEntity.status(HttpStatus.OK).body("Successfully registered Admin");
-        } catch (JsonProcessingException e) {
-            logger.error("Error parsing admin data: {}", e.getMessage());
-            return ResponseEntity.badRequest().body("Invalid admin data format.");
-        } catch (IllegalArgumentException e) {
-            logger.error("Error during registration: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(e.getMessage());
-        } catch (Exception e) {
-            logger.error("An unexpected error occurred: {}", e.getMessage());
-            return ResponseEntity.status(500).body("An unexpected error occurred: " + e.getMessage());
-        }
-    }
-
-    // Helper method to validate image types
-    private  boolean isValidImageType(String contentType) {
-        return !contentType.equalsIgnoreCase(".jpeg") &&
-                !contentType.equalsIgnoreCase(".png") &&
-                !contentType.equalsIgnoreCase(".jpg");
-    }
-
-    @PostMapping("/login")
-    public ResponseEntity<String> loginAdmin(@RequestParam String username, @RequestParam String password) {
-        try {
-            logger.info("Login attempt for username: {}", username);
-            String result = adminService.loginAdmin(username, password);
-            return ResponseEntity.status(HttpStatus.OK).body("Admin Login Successfully");
+            // Call the service method
+            String response = adminService.loginAdmin(username, password);
+            return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
-            logger.error("Error occurred during login: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+            if (e.getMessage().contains("Invalid credentials")) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+            } else if (e.getMessage().contains("not approved")) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+            } else {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error during login: " + e.getMessage());
+            }
         }
     }
+
 
     @PutMapping("/updateAdmin/{adminId}")
     public ResponseEntity<?> updateAdmin(

@@ -115,21 +115,30 @@ public class FormController {
         }
     }
 
-    // Endpoint to download CV of a form submission
+
     @GetMapping("/downloadCv/{formId}")
     public ResponseEntity<byte[]> downloadCv(@PathVariable Long formId) {
         try {
-            Form form = formService.getFormById(formId);  // Get the form by ID
-            byte[] cv = form.getCv();  // Get the CV as byte array
+            // Fetch the form by ID
+            Form form = formService.getFormById(formId);
+            byte[] cv = form.getCv(); // Get the CV as byte array
+
+            // Validate if CV exists
             if (cv == null) {
                 logger.error("No CV found for form with ID: {}", formId);
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body("No CV available for this form.".getBytes());
             }
+
+            // Retrieve MIME type and set default file name
+            String fileType = form.getCvFileType(); // Make sure to store the MIME type during upload
+            String fileExtension = fileType.substring(fileType.lastIndexOf("/") + 1); // Extract file extension from MIME type
+            String fileName = "cv." + fileExtension;
+
             logger.info("Returning CV for form with ID: {}", formId);
             return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"cv.pdf\"")
-                    .contentType(MediaType.APPLICATION_PDF)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+                    .contentType(MediaType.parseMediaType(fileType)) // Dynamically set the content type
                     .body(cv);
         } catch (Exception e) {
             logger.error("Error downloading CV: {}", e.getMessage());
@@ -137,6 +146,7 @@ public class FormController {
                     .body("Error downloading CV.".getBytes());
         }
     }
+
 
     @GetMapping("/getAllForms")
     public ResponseEntity<List<Form>> getAllForms() {
