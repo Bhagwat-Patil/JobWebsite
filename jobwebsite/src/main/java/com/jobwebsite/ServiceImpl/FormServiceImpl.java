@@ -62,12 +62,17 @@ public class FormServiceImpl implements FormService {
             // Handle CV file if provided
             if (cvFile != null && !cvFile.isEmpty()) {
                 String fileType = cvFile.getContentType();
-                // Validate file type (PDF, JPEG/JPG)
-                if ("application/pdf".equals(fileType) || "image/jpeg".equals(fileType) || "image/jpg".equals(fileType)) {
-                    // Convert file to byte[] and set to form
+                // Validate file type (PDF, JPEG/JPG, DOCX)
+                if ("application/pdf".equals(fileType) ||
+                        "image/jpeg".equals(fileType) ||
+                        "image/jpg".equals(fileType) ||
+                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document".equals(fileType)) {
+
+                    // Set the file type and CV data to the form
+                    form.setCvFileType(fileType);
                     form.setCv(cvFile.getBytes());
                 } else {
-                    return "Only PDF and JPEG/JPG files are allowed.";
+                    return "Only PDF, DOCX, and JPEG/JPG files are allowed.";
                 }
             }
 
@@ -94,6 +99,8 @@ public class FormServiceImpl implements FormService {
         }
     }
 
+
+
     @Override
     public String applyForInternship(String formData, MultipartFile cvFile, Long internshipId) {
         try {
@@ -105,12 +112,17 @@ public class FormServiceImpl implements FormService {
             // Handle CV file if provided
             if (cvFile != null && !cvFile.isEmpty()) {
                 String fileType = cvFile.getContentType();
-                // Validate file type (PDF, JPEG/JPG)
-                if ("application/pdf".equals(fileType) || "image/jpeg".equals(fileType) || "image/jpg".equals(fileType)) {
-                    // Convert file to byte[] and set to form
+                // Validate file type (PDF, JPEG/JPG, DOCX)
+                if ("application/pdf".equals(fileType) ||
+                        "image/jpeg".equals(fileType) ||
+                        "image/jpg".equals(fileType) ||
+                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document".equals(fileType)) {
+
+                    // Set the file type and CV data to the form
+                    form.setCvFileType(fileType);
                     form.setCv(cvFile.getBytes());
                 } else {
-                    return "Only PDF and JPEG/JPG files are allowed.";
+                    return "Only PDF, DOCX, and JPEG/JPG files are allowed.";
                 }
             }
 
@@ -136,6 +148,8 @@ public class FormServiceImpl implements FormService {
             throw new RuntimeException("Error applying for internship.");
         }
     }
+
+
 
     @Override
     public Form getFormById(Long id) {
