@@ -22,6 +22,9 @@ public class SuperAdminController {
     @Autowired
     private AdminRepository adminRepository;
 
+    @Autowired
+    private AdminService adminService;
+
     @PostMapping("/disableAdmin/{adminId}")
     public ResponseEntity<Admin> disableAdmin(@PathVariable Long adminId) {
         Admin disabledAdmin = superAdminService.disableAdmin(adminId);
@@ -34,15 +37,11 @@ public class SuperAdminController {
         return ResponseEntity.ok(admins);
     }
 
-    @PutMapping("/adminApproval/{adminId}")
-    public ResponseEntity<String> adminApproval(@PathVariable Long adminId) {
-        try {
-            // Call service method to approve admin
-            String response = superAdminService.approveAdmin(adminId);
-            return ResponseEntity.ok(response);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-        }
+
+    @PostMapping("/approveAdmin/{id}")
+    public String approveAdmin(@PathVariable Long id) {
+        superAdminService.approveAdmin(id);
+        return "Admin has been approved successfully.";
     }
 
 

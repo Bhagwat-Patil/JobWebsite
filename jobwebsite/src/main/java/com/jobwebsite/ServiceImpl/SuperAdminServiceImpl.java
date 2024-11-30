@@ -2,7 +2,9 @@ package com.jobwebsite.ServiceImpl;
 
 import com.jobwebsite.Entity.Admin;
 import com.jobwebsite.Repository.AdminRepository;
+import com.jobwebsite.Service.EmailService;
 import com.jobwebsite.Service.SuperAdminService;
+import jakarta.mail.MessagingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,25 +19,30 @@ public class SuperAdminServiceImpl implements SuperAdminService {
     @Autowired
     private AdminRepository adminRepository;
 
+    @Autowired
+    private EmailService emailService;
+
 
     @Override
-    public String approveAdmin(Long adminId) {
+    public void approveAdmin(Long adminId) {
+        Admin admin = adminRepository.findById(adminId)
+                .orElseThrow(() -> new RuntimeException("Admin not found"));
+
+        admin.setApproved(true);
+        adminRepository.save(admin);
+
+        // Send approval email to Admin
         try {
-            logger.info("Attempting to approve admin with ID: {}", adminId);
+            emailService.sendEmail(
+                    "bhagwatkhedkar11@gmail.com", // From superadmin's email
+                    admin.getEmail(), // To admin's email
+                    "Admin Approval",
+                    "Dear " + admin.getName() + ", your admin profile has been approved by the super admin.",
+                    true // Use superadmin's email configuration
 
-            // Fetch admin by ID
-            Admin admin = adminRepository.findById(adminId)
-                    .orElseThrow(() -> new RuntimeException("Admin not found!"));
-
-            // Approve the admin
-            admin.setApproved(true);
-            adminRepository.save(admin);
-
-            logger.info("Admin with ID: {} approved successfully.", adminId);
-            return "Admin approved successfully.";
-        } catch (Exception e) {
-            logger.error("Error approving admin with ID: {}: {}", adminId, e.getMessage());
-            throw new RuntimeException("Error approving admin: " + e.getMessage());
+            );
+        } catch (MessagingException e) {
+            throw new RuntimeException("Failed to send approval email to admin: " + e.getMessage(), e);
         }
     }
 

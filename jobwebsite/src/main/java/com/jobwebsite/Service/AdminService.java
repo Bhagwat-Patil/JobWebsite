@@ -13,7 +13,7 @@ import java.util.List;
 
 public interface AdminService {
 
-    String registerAdmin(Admin admin);
+    Admin registerAdmin(Admin admin);
     String loginAdmin(String username, String password);
 
     @Transactional
