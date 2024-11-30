@@ -35,18 +35,9 @@ public class AdminController {
 
 
     @PostMapping("/registerAdmin")
-    public ResponseEntity<String> registerAdmin(@RequestBody Admin admin) {
-        try {
-            // Set default values
-            admin.setApproved(false); // Not approved by default
-            adminRepository.save(admin); // Save admin to the database
-
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body("Admin registered successfully. Waiting for Super Admin approval.");
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error registering admin: " + e.getMessage());
-        }
+    public String registerAdmin(@RequestBody Admin admin) {
+        adminService.registerAdmin(admin);
+        return "Admin registration request sent to super admin.";
     }
 
     @PostMapping("/loginAdmin")
@@ -209,6 +200,8 @@ public class AdminController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
     }
+
+
 
 }
 

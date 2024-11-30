@@ -7,18 +7,17 @@ import com.jobwebsite.Entity.Internship;
 import com.jobwebsite.Entity.Job;
 import com.jobwebsite.Exception.AdminNotFoundException;
 import com.jobwebsite.Exception.FormNotFoundException;
-import com.jobwebsite.Repository.AdminRepository;
-import com.jobwebsite.Repository.FormRepository;
-import com.jobwebsite.Repository.InternshipRepository;
-import com.jobwebsite.Repository.JobRepository;
+import com.jobwebsite.Repository.*;
 import com.jobwebsite.Service.AdminService;
+import com.jobwebsite.Service.EmailService;
+import jakarta.mail.MessagingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import java.io.IOException;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -39,21 +38,32 @@ public class AdminServiceImpl implements AdminService {
     @Autowired
     private InternshipRepository internshipRepository;
 
+    @Autowired
+    private EmailService emailService;
+
 
     @Override
-    public String registerAdmin(Admin admin) {
+    public Admin registerAdmin(Admin admin) {
+        admin.setApproved(false);
+        adminRepository.save(admin);
+
+        // Send email to Super Admin
         try {
-            logger.info("Registering new admin: {}", admin.getUsername());
-            // Set the approved field to false by default
-            admin.setApproved(false);
-            adminRepository.save(admin);
-            logger.info("Admin registered successfully: {}", admin.getUsername());
-            return "Admin registered successfully. Waiting for Super Admin approval.";
-        } catch (Exception e) {
-            logger.error("Error registering admin: {}", e.getMessage());
-            throw new RuntimeException("Error registering admin: " + e.getMessage());
+            emailService.sendEmail(
+                    admin.getEmail(), // From admin's email
+                    "bhagwatkhedkar11@gmail.com", // To superadmin's email
+                    "Admin Registration Request",
+                    "An admin with email " + admin.getEmail() + " has registered. Please review and approve.",
+                    false // Use the admin's own email configuration
+            );
+        } catch (MessagingException e) {
+            throw new RuntimeException("Failed to send email to super admin: " + e.getMessage(), e);
         }
+
+        return admin;
     }
+
+
 
     @Override
     public String loginAdmin(String username, String password) {
@@ -112,20 +122,21 @@ public class AdminServiceImpl implements AdminService {
         }
 
         // Update profile picture if a new one is provided and valid
-        if (profilePicture != null && !profilePicture.isEmpty()) {
-            String contentType = profilePicture.getContentType();
-            if (contentType != null && (contentType.equals("image/jpeg") || contentType.equals("image/png"))) {
-                try {
-                    existingAdmin.setProfilePicture(profilePicture.getBytes());
-                } catch (IOException e) {
-                    logger.error("Failed to update profile picture for admin with id: {}", adminId, e);
-                    throw new RuntimeException("Failed to update profile picture", e);
-                }
-            } else {
-                logger.warn("Invalid file type: {}", contentType);
-                throw new RuntimeException("Only JPEG or PNG images are allowed");
-            }
-        }
+//        if (profilePicture != null && !profilePicture.isEmpty()) {
+//            String contentType = profilePicture.getContentType();
+//            if (contentType != null && (contentType.equals("image/jpeg") || contentType.equals("image/png"))) {
+//                try {
+//                    existingAdmin.setProfilePicture(profilePicture.getBytes());
+//                } catch (IOException e) {
+//                    logger.error("Failed to update profile picture for admin with id: {}", adminId, e);
+//                    throw new RuntimeException("Failed to update profile picture", e);
+//                }
+//            }
+//            else {
+//                logger.warn("Invalid file type: {}", contentType);
+//                throw new RuntimeException("Only JPEG or PNG images are allowed");
+//            }
+//        }
         // Save the updated admin
         Admin updatedAdmin = adminRepository.save(existingAdmin);
         logger.info("Successfully updated admin with id: {}", adminId);
