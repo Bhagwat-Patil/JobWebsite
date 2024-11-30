@@ -76,6 +76,12 @@ public class AdminServiceImpl implements AdminService {
                 throw new RuntimeException("Admin not approved by Super Admin.");
             }
 
+            if(!admin.isEnabled())
+            {
+                logger.warn("Admin disabled by Super Admin: {}", username);
+                throw new RuntimeException("Admin disabled by Super Admin.");
+            }
+
             logger.info("Admin login successful: {}", username);
             return "Login successful!";
         } catch (Exception e) {
