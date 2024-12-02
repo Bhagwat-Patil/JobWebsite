@@ -30,5 +30,6 @@ public interface AdminService {
     String jobpost(Job job, Long adminId);
 
     String postInternship(Internship internship, Long adminId);
+
 }
 
