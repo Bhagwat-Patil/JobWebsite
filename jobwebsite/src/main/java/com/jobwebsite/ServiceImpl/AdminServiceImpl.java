@@ -1,10 +1,13 @@
 package com.jobwebsite.ServiceImpl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.jobwebsite.CommonUtil.ValidationClass;
-import com.jobwebsite.Entity.Admin;
-import com.jobwebsite.Entity.Form;
-import com.jobwebsite.Entity.Internship;
-import com.jobwebsite.Entity.Job;
+import com.jobwebsite.Entity.*;
+import com.jobwebsite.Exception.AdminNotApprovedException;
+import com.jobwebsite.Exception.AdminNotEnabledException;
 import com.jobwebsite.Exception.AdminNotFoundException;
 import com.jobwebsite.Exception.FormNotFoundException;
 import com.jobwebsite.Repository.*;
@@ -17,7 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -41,6 +43,9 @@ public class AdminServiceImpl implements AdminService {
     @Autowired
     private EmailService emailService;
 
+    @Autowired
+    private PendingPostRepository pendingPostRepository;
+
 
     @Override
     public Admin registerAdmin(Admin admin) {
@@ -62,8 +67,6 @@ public class AdminServiceImpl implements AdminService {
 
         return admin;
     }
-
-
 
     @Override
     public String loginAdmin(String username, String password) {
@@ -126,23 +129,6 @@ public class AdminServiceImpl implements AdminService {
         if (adminDetails.getEmail() != null && ValidationClass.EMAIL_PATTERN.matcher(adminDetails.getEmail()).matches()) {
             existingAdmin.setEmail(adminDetails.getEmail());
         }
-
-        // Update profile picture if a new one is provided and valid
-//        if (profilePicture != null && !profilePicture.isEmpty()) {
-//            String contentType = profilePicture.getContentType();
-//            if (contentType != null && (contentType.equals("image/jpeg") || contentType.equals("image/png"))) {
-//                try {
-//                    existingAdmin.setProfilePicture(profilePicture.getBytes());
-//                } catch (IOException e) {
-//                    logger.error("Failed to update profile picture for admin with id: {}", adminId, e);
-//                    throw new RuntimeException("Failed to update profile picture", e);
-//                }
-//            }
-//            else {
-//                logger.warn("Invalid file type: {}", contentType);
-//                throw new RuntimeException("Only JPEG or PNG images are allowed");
-//            }
-//        }
         // Save the updated admin
         Admin updatedAdmin = adminRepository.save(existingAdmin);
         logger.info("Successfully updated admin with id: {}", adminId);
@@ -191,50 +177,83 @@ public class AdminServiceImpl implements AdminService {
         return transformedAdmins;
     }
 
-
     @Override
     @Transactional
     public String jobpost(Job job, Long adminId) {
-        logger.info("Posting job: {}", job);
-
-        // Fetch the admin based on adminId
         Admin admin = adminRepository.findById(adminId)
                 .orElseThrow(() -> new AdminNotFoundException("Admin not found with ID: " + adminId));
 
-        // Set the admin for the job
-        job.setAdmin(admin);
+        // Check if the admin is approved and enabled
+        if (!admin.isApproved()) {  // Assuming you have a field `isApproved` in your Admin entity
+            throw new AdminNotApprovedException("Admin not approved. Please wait for approval.");
+        }
 
-        // Save the job
-        job.setCreatedAt(LocalDateTime.now());
-        job.setUpdatedAt(LocalDateTime.now());
-        jobRepository.save(job);
+        if (!admin.isEnabled()) {  // Assuming you have a field `isEnabled` in your Admin entity
+            throw new AdminNotEnabledException("Admin is not enabled. Please contact the Super Admin.");
+        }
 
-        logger.info("Successfully posted job: {}", job.getId());
-        return "Job posted successfully";
+        // Proceed with posting the job if the admin is approved and enabled
+        // Serialize the Job object
+        String jobContent = serialize(job);
+
+        PendingPost pendingPost = new PendingPost();
+        pendingPost.setType(PostType.JOB);
+        pendingPost.setContent(jobContent);  // Store the serialized Job object
+        pendingPost.setAdminId(adminId);
+        pendingPost.setCreatedAt(LocalDateTime.now());
+        pendingPost.setApproved(false); // Initially not approved
+
+        // Save to the pending posts table
+        pendingPostRepository.save(pendingPost);
+
+        logger.info("Job post sent to super admin for approval.");
+        return "Job post sent to super admin for approval.";
     }
 
 
     @Override
     @Transactional
     public String postInternship(Internship internship, Long adminId) {
-        logger.info("Posting internship: {}", internship);
-
-        // Fetch the admin based on adminId
         Admin admin = adminRepository.findById(adminId)
                 .orElseThrow(() -> new AdminNotFoundException("Admin not found with ID: " + adminId));
 
-        // Set the admin for the internship
-        internship.setAdmin(admin);
+        // Check if the admin is approved and enabled
+        if (!admin.isApproved()) {  // Assuming you have a field `isApproved` in your Admin entity
+            throw new AdminNotApprovedException("Admin not approved. Please wait for approval.");
+        }
 
-        // Save the internship
-        internship.setCreatedAt(LocalDateTime.now());
-        internship.setUpdatedAt(LocalDateTime.now());
-        internshipRepository.save(internship);
+        if (!admin.isEnabled()) {  // Assuming you have a field `isEnabled` in your Admin entity
+            throw new AdminNotEnabledException("Admin is not enabled. Please contact the Super Admin.");
+        }
 
-        logger.info("Successfully posted internship: {}", internship.getId());
-        return "Internship posted successfully";
+        // Proceed with posting the internship if the admin is approved and enabled
+        // Serialize the Internship object
+        String internshipContent = serialize(internship);
+
+        PendingPost pendingPost = new PendingPost();
+        pendingPost.setType(PostType.INTERNSHIP);
+        pendingPost.setContent(internshipContent);  // Store the serialized Internship object
+        pendingPost.setAdminId(adminId);
+        pendingPost.setCreatedAt(LocalDateTime.now());
+        pendingPost.setApproved(false); // Initially not approved
+
+        // Save to the pending posts table
+        pendingPostRepository.save(pendingPost);
+
+        logger.info("Internship post sent to super admin for approval.");
+        return "Internship post sent to super admin for approval.";
     }
 
+    private String serialize(Object object) {
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.registerModule(new JavaTimeModule());  // Register the JavaTimeModule
+            objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);  // Optional: to format dates as string
+            return objectMapper.writeValueAsString(object);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Error serializing object: " + e.getMessage(), e);
+        }
+    }
 
     public List<Form> getAllForms() {
         logger.info("Fetching all forms");

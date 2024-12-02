@@ -6,6 +6,8 @@ import com.jobwebsite.Entity.Admin;
 import com.jobwebsite.Entity.Form;
 import com.jobwebsite.Entity.Internship;
 import com.jobwebsite.Entity.Job;
+import com.jobwebsite.Exception.AdminNotApprovedException;
+import com.jobwebsite.Exception.AdminNotEnabledException;
 import com.jobwebsite.Exception.AdminNotFoundException;
 import com.jobwebsite.Exception.UserNotFoundException;
 import com.jobwebsite.Repository.AdminRepository;
@@ -140,14 +142,28 @@ public class AdminController {
     public ResponseEntity<String> jobPost(@PathVariable Long adminId, @RequestBody Job job) {
         try {
             logger.info("Received request to post job by adminId: {}", adminId);
+
+            // Send the job post to super admin for approval (not directly saving to DB)
             String result = adminService.jobpost(job, adminId);
+
+            // Respond with a message indicating the post is sent for approval
             return ResponseEntity.status(HttpStatus.CREATED).body(result);
         } catch (AdminNotFoundException e) {
+            // Admin not found
             logger.error("Admin not found with ID: {}", adminId, e);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Admin not found: " + e.getMessage());
+        } catch (AdminNotApprovedException e) {
+            // Admin not approved
+            logger.error("Admin not approved with ID: {}", adminId, e);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Admin not approved. Please wait for approval.");
+        } catch (AdminNotEnabledException e) {
+            // Admin not enabled
+            logger.error("Admin not enabled with ID: {}", adminId, e);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Admin is not enabled. Please contact the Super Admin.");
         } catch (Exception e) {
+            // Generic error
             logger.error("Error posting job: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error posting job");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error posting job. Please try again later.");
         }
     }
 
@@ -155,13 +171,29 @@ public class AdminController {
     @PostMapping("/postInternship/{adminId}")
     public ResponseEntity<String> postInternship(@PathVariable Long adminId, @RequestBody Internship internship) {
         try {
+            logger.info("Received request to post internship by adminId: {}", adminId);
+
+            // Send the internship post to super admin for approval (not directly saving to DB)
             String result = adminService.postInternship(internship, adminId);
+
+            // Respond with a message indicating the post is sent for approval
             return ResponseEntity.status(HttpStatus.CREATED).body(result);
         } catch (AdminNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+            // Admin not found
+            logger.error("Admin not found with ID: {}", adminId, e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Admin not found: " + e.getMessage());
+        } catch (AdminNotApprovedException e) {
+            // Admin not approved
+            logger.error("Admin not approved with ID: {}", adminId, e);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Admin not approved. Please wait for approval.");
+        } catch (AdminNotEnabledException e) {
+            // Admin not enabled
+            logger.error("Admin not enabled with ID: {}", adminId, e);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Admin is not enabled. Please contact the Super Admin.");
         } catch (Exception e) {
-            logger.error("Error posting internship: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error posting internship");
+            // Generic error
+            logger.error("Error posting internship: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error posting internship. Please try again later.");
         }
     }
 
@@ -200,8 +232,6 @@ public class AdminController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
     }
-
-
 
 }
 

@@ -2,6 +2,7 @@ package com.jobwebsite.Entity;//class job
 
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -45,9 +46,12 @@ public class Job {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    // Newly added fields
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate openingStartDate;
+
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate lastApplyDate;
+
     private Integer numberOfOpenings;
     private String perks;
 

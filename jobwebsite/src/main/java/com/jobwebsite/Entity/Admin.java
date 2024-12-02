@@ -34,12 +34,6 @@ public class Admin {
 
     private boolean enabled = true;
 
-//    @Lob
-//    @Column(name = "profile_picture",columnDefinition = "LONGBLOB")
-//    @Basic(fetch = FetchType.LAZY)
-//    //@Nullable
-//    private byte[] profilePicture;
-
     @OneToMany(mappedBy ="admin" ,cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference("admin-forms")
     private List<Form> form;
