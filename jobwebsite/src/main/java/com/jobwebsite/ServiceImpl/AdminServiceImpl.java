@@ -68,8 +68,9 @@ public class AdminServiceImpl implements AdminService {
         return admin;
     }
 
+
     @Override
-    public String loginAdmin(String username, String password) {
+    public Admin loginAdmin(String username, String password) {
         try {
             logger.info("Attempting login for admin: {}", username);
 
@@ -89,14 +90,13 @@ public class AdminServiceImpl implements AdminService {
                 throw new RuntimeException("Admin not approved by Super Admin.");
             }
 
-            if(!admin.isEnabled())
-            {
+            if (!admin.isEnabled()) {
                 logger.warn("Admin disabled by Super Admin: {}", username);
                 throw new RuntimeException("Admin disabled by Super Admin.");
             }
 
             logger.info("Admin login successful: {}", username);
-            return "Login successful!";
+            return admin; // Return admin details upon successful login
         } catch (Exception e) {
             logger.error("Error during admin login: {}", e.getMessage());
             throw new RuntimeException("Error during login: " + e.getMessage());
