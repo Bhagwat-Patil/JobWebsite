@@ -6,10 +6,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.jobwebsite.CommonUtil.ValidationClass;
 import com.jobwebsite.Entity.*;
-import com.jobwebsite.Exception.AdminNotApprovedException;
-import com.jobwebsite.Exception.AdminNotEnabledException;
-import com.jobwebsite.Exception.AdminNotFoundException;
-import com.jobwebsite.Exception.FormNotFoundException;
+import com.jobwebsite.Exception.*;
 import com.jobwebsite.Repository.*;
 import com.jobwebsite.Service.AdminService;
 import com.jobwebsite.Service.EmailService;
@@ -271,19 +268,54 @@ public class AdminServiceImpl implements AdminService {
         return jobRepository.findAll();
     }
 
-    private void validateAdminData(Admin admin) {
-        // Validate admin data
-        if (admin.getUsername() == null || !ValidationClass.USERNAME_PATTERN.matcher(admin.getUsername()).matches()) {
-            throw new IllegalArgumentException("Invalid username");
+    @Override
+    @Transactional
+    public String deleteJobPost(Long adminId, Long postId) {
+        Admin admin = adminRepository.findById(adminId)
+                .orElseThrow(() -> new AdminNotFoundException("Admin not found with ID: " + adminId));
+
+        validateAdminApproval(admin);
+
+        boolean exists = jobRepository.existsById(postId);
+        if (!exists) {
+            throw new PostNotFoundException("Job post not found with ID: " + postId);
         }
-        if (admin.getEmail() == null || !ValidationClass.EMAIL_PATTERN.matcher(admin.getEmail()).matches()) {
-            throw new IllegalArgumentException("Invalid email");
+
+        // Direct delete query to avoid JPA caching issues
+        jobRepository.deleteById(postId);
+        logger.info("Job post with ID: {} deleted successfully by admin ID: {}", postId, adminId);
+        return "Job post deleted successfully.";
+    }
+
+
+    @Override
+    @Transactional
+    public String deleteInternshipPost(Long adminId, Long postId) {
+        Admin admin = adminRepository.findById(adminId)
+                .orElseThrow(() -> new AdminNotFoundException("Admin not found with ID: " + adminId));
+
+        validateAdminApproval(admin);
+
+        Internship internship = internshipRepository.findById(postId)
+                .orElseThrow(() -> new PostNotFoundException("Internship post not found with ID: " + postId));
+
+        // Only allow the admin who posted the internship to delete it
+        if (!internship.getAdmin().getId().equals(adminId)) {
+            throw new SecurityException("Admin not authorized to delete this internship post.");
         }
-        if (admin.getPassword() == null || !ValidationClass.PASSWORD_PATTERN.matcher(admin.getPassword()).matches()) {
-            throw new IllegalArgumentException("Invalid password");
+
+        internshipRepository.delete(internship);
+        logger.info("Internship post with ID: {} deleted successfully by admin ID: {}", postId, adminId);
+        return "Internship post deleted successfully.";
+    }
+
+    private void validateAdminApproval(Admin admin) {
+        if (!admin.isApproved()) {
+            throw new AdminNotApprovedException("Admin is not approved to perform this operation.");
         }
-        if (admin.getMobileNo() == null || !ValidationClass.PHONE_PATTERN.matcher(admin.getMobileNo()).matches()) {
-            throw new IllegalArgumentException("Invalid mobile number");
+
+        if (!admin.isEnabled()) {
+            throw new AdminNotEnabledException("Admin is not enabled to perform this operation.");
         }
     }
 

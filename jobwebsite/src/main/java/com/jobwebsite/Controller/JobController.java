@@ -116,7 +116,6 @@ public class JobController {
         }
     }
 
-
     @GetMapping("/getJobById/{id}")
     public ResponseEntity<Job> getJobById(@PathVariable Long id) {
         try {
