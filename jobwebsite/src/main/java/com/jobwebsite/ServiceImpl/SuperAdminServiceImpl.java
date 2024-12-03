@@ -111,11 +111,16 @@ public class SuperAdminServiceImpl implements SuperAdminService {
         logger.info("Fetched pending post: {}", pendingPost);
 
         if (isApproved) {
+            // Fetch the Admin based on the adminId in the pending post
+            Admin admin = adminRepository.findById(pendingPost.getAdminId())
+                    .orElseThrow(() -> new RuntimeException("Admin not found for ID: " + pendingPost.getAdminId()));
+
             if (pendingPost.getType() == PostType.JOB) {
                 Job job = deserializeJob(pendingPost.getContent());
+                job.setAdmin(admin); // Set the Admin in the Job entity
                 jobRepository.save(job);
             } else if (pendingPost.getType() == PostType.INTERNSHIP) {
-                Internship internship = deserializeInternship(pendingPost.getContent(), pendingPost.getAdminId());
+                Internship internship = deserializeInternship(pendingPost.getContent(), admin);
                 internshipRepository.save(internship);
             }
 
@@ -140,15 +145,13 @@ public class SuperAdminServiceImpl implements SuperAdminService {
         }
     }
 
-    private Internship deserializeInternship(String internshipContent, Long adminId) {
+    private Internship deserializeInternship(String internshipContent, Admin admin) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
             Internship internship = objectMapper.readValue(internshipContent, Internship.class);
 
-            // Set the admin using the adminId
-            Admin admin = adminRepository.findById(adminId)
-                    .orElseThrow(() -> new RuntimeException("Admin not found for ID: " + adminId));
+            // Set the admin
             internship.setAdmin(admin);
 
             return internship;
