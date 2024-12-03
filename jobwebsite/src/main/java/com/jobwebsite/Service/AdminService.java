@@ -32,5 +32,10 @@ public interface AdminService {
 
     String postInternship(Internship internship, Long adminId);
 
+    @Transactional
+    String deleteJobPost(Long adminId, Long postId);
+
+    @Transactional
+    String deleteInternshipPost(Long adminId, Long postId);
 }
 

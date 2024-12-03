@@ -6,10 +6,7 @@ import com.jobwebsite.Entity.Admin;
 import com.jobwebsite.Entity.Form;
 import com.jobwebsite.Entity.Internship;
 import com.jobwebsite.Entity.Job;
-import com.jobwebsite.Exception.AdminNotApprovedException;
-import com.jobwebsite.Exception.AdminNotEnabledException;
-import com.jobwebsite.Exception.AdminNotFoundException;
-import com.jobwebsite.Exception.UserNotFoundException;
+import com.jobwebsite.Exception.*;
 import com.jobwebsite.Repository.AdminRepository;
 import com.jobwebsite.Service.AdminService;
 import org.slf4j.Logger;
@@ -137,7 +134,6 @@ public class AdminController {
         }
     }
 
-
     @PostMapping("/JobPost/{adminId}")
     public ResponseEntity<String> jobPost(@PathVariable Long adminId, @RequestBody Job job) {
         try {
@@ -166,7 +162,6 @@ public class AdminController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error posting job. Please try again later.");
         }
     }
-
 
     @PostMapping("/postInternship/{adminId}")
     public ResponseEntity<String> postInternship(@PathVariable Long adminId, @RequestBody Internship internship) {
@@ -225,11 +220,47 @@ public class AdminController {
     @GetMapping("/job/getAllJobs")
     public ResponseEntity<List<Job>> getAllJobsUploadedByAdmin() {
         try {
-            logger.info("Received request to get all jobs uploaded by Admin ID: {}");
+            logger.info("Received request to get all jobs uploaded by Admin ID : {}");
             return new ResponseEntity<>(adminService.getAllJobsUploadedByAdmin(), HttpStatus.OK);
         } catch (Exception e) {
             logger.error("Failed to retrieve jobs uploaded by admin: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+    }
+
+    @DeleteMapping("/deleteJobPost/{adminId}/{postId}")
+    public ResponseEntity<String> deleteJobPost(@PathVariable Long adminId, @PathVariable Long postId) {
+        try {
+            logger.info("Request to delete job post with ID: {} by admin ID: {}", postId, adminId);
+            String result = adminService.deleteJobPost(adminId, postId);
+            return ResponseEntity.ok(result);
+        } catch (AdminNotFoundException e) {
+            logger.error("Admin not found: {}", adminId, e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Admin not found: " + e.getMessage());
+        } catch (PostNotFoundException e) {
+            logger.error("Job post not found: {}", postId, e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Job post not found: " + e.getMessage());
+        } catch (Exception e) {
+            logger.error("Error deleting job post: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error deleting job post.");
+        }
+    }
+
+    @DeleteMapping("/deleteInternshipPost/{adminId}/{postId}")
+    public ResponseEntity<String> deleteInternshipPost(@PathVariable Long adminId, @PathVariable Long postId) {
+        try {
+            logger.info("Request to delete internship post with ID: {} by admin ID: {}", postId, adminId);
+            String result = adminService.deleteInternshipPost(adminId, postId);
+            return ResponseEntity.ok(result);
+        } catch (AdminNotFoundException e) {
+            logger.error("Admin not found: {}", adminId, e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Admin not found: " + e.getMessage());
+        } catch (PostNotFoundException e) {
+            logger.error("Internship post not found: {}", postId, e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Internship post not found: " + e.getMessage());
+        } catch (Exception e) {
+            logger.error("Error deleting internship post: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error deleting internship post.");
         }
     }
 
