@@ -43,7 +43,7 @@ public class AdminController {
     }
 
     @PostMapping("/loginAdmin")
-    public ResponseEntity<String> loginAdmin(@RequestBody Map<String, String> credentials) {
+    public ResponseEntity<Object> loginAdmin(@RequestBody Map<String, String> credentials) {
         try {
             String username = credentials.get("username");
             String password = credentials.get("password");
@@ -53,12 +53,12 @@ public class AdminController {
             }
 
             // Call the service method
-            String response = adminService.loginAdmin(username, password);
-            return ResponseEntity.ok(response);
+            Admin admin = adminService.loginAdmin(username, password);
+            return ResponseEntity.ok(admin); // Return admin details on successful login
         } catch (RuntimeException e) {
             if (e.getMessage().contains("Invalid credentials")) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
-            } else if (e.getMessage().contains("not approved")) {
+            } else if (e.getMessage().contains("not approved") || e.getMessage().contains("disabled")) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
             } else {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error during login: " + e.getMessage());

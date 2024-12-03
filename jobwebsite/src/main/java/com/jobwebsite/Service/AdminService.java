@@ -14,7 +14,8 @@ import java.util.List;
 public interface AdminService {
 
     Admin registerAdmin(Admin admin);
-    String loginAdmin(String username, String password);
+
+    Admin loginAdmin(String username, String password);
 
     @Transactional
     Admin updateAdmin(Long adminId, Admin adminDetails, MultipartFile profilePicture);
