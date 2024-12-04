@@ -53,7 +53,7 @@ public class AdminServiceImpl implements AdminService {
         try {
             emailService.sendEmail(
                     admin.getEmail(), // From admin's email
-                    "bhagwatkhedkar11@gmail.com", // To superadmin's email
+                    "achhajobssuper@gmail.com", // To superadmin's email
                     "Admin Registration Request",
                     "An admin with email " + admin.getEmail() + " has registered. Please review and approve.",
                     false // Use the admin's own email configuration
