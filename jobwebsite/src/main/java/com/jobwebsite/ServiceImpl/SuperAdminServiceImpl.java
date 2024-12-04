@@ -75,7 +75,7 @@ public class SuperAdminServiceImpl implements SuperAdminService {
         // Send approval email to Admin
         try {
             emailService.sendEmail(
-                    "bhagwatkhedkar11@gmail.com", // From superadmin's email
+                    "achhajobssuper@gmail.com", // From superadmin's email
                     admin.getEmail(), // To admin's email
                     "Admin Approval",
                     emailContent,
