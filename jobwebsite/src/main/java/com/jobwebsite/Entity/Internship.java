@@ -57,6 +57,8 @@ public class Internship {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate lastApplyDate;
     private Integer numberOfOpenings;
+
+    @Lob
     private String perks;
 
     @Lob
