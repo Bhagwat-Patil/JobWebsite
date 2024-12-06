@@ -25,7 +25,6 @@ public class Form {
     @Lob
     private byte[] cv;
 
-    // field to store the MIME type of the uploaded CV
     private String cvFileType;
 
     @ManyToOne(fetch = FetchType.LAZY)
