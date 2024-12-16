@@ -34,14 +34,16 @@ public class UserServiceImpl implements UserService {
     public User loginUser(String username, String password) throws InvalidCredentialsException {
         logger.info("Attempting login for username: {}", username);
 
+        // Fetching the user by username
         User user = userRepository.findByUserName(username);
         if (user == null || !user.getPassword().equals(password)) {
             logger.error("Login failed for username: {}", username);
             throw new InvalidCredentialsException("Invalid username or password.");
         }
-
+        // Returning the user object upon successful login
         return user;
     }
+
 
     @Override
     public User updateUser(Long id, User user) throws UserAlreadyExistsException {
