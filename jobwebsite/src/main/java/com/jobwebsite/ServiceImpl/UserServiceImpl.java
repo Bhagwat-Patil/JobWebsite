@@ -6,6 +6,7 @@ import com.jobwebsite.Exception.UserAlreadyExistsException;
 import com.jobwebsite.Repository.UserRepository;
 import com.jobwebsite.Service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,11 +19,22 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private UserRepository userRepository;
 
+    private final PasswordEncoder passwordEncoder;
+
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
+
     @Override
     public User registerUser(User user) throws UserAlreadyExistsException {
         logger.info("Attempting to register user with username: {}", user.getUserName());
 
-        validateUser(user); // Assuming this method checks for validity and throws exceptions if invalid
+        validateUser(user);
+
+        // Encrypt the password before saving
+        String encryptedPassword = passwordEncoder.encode(user.getPassword());
+        user.setPassword(encryptedPassword);
 
         User savedUser = userRepository.save(user);
         logger.info("User registered successfully with ID: {}", savedUser.getId());
@@ -36,10 +48,11 @@ public class UserServiceImpl implements UserService {
 
         // Fetching the user by username
         User user = userRepository.findByUserName(username);
-        if (user == null || !user.getPassword().equals(password)) {
+        if (user == null || !passwordEncoder.matches(password, user.getPassword())) {
             logger.error("Login failed for username: {}", username);
             throw new InvalidCredentialsException("Invalid username or password.");
         }
+
         // Returning the user object upon successful login
         return user;
     }

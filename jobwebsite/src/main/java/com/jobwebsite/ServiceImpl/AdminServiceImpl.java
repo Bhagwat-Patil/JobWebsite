@@ -14,6 +14,7 @@ import jakarta.mail.MessagingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -43,9 +44,19 @@ public class AdminServiceImpl implements AdminService {
     @Autowired
     private PendingPostRepository pendingPostRepository;
 
+    private final PasswordEncoder passwordEncoder; // Inject PasswordEncoder
+
+    @Autowired
+    public AdminServiceImpl(AdminRepository adminRepository, EmailService emailService, PasswordEncoder passwordEncoder) {
+        this.adminRepository = adminRepository;
+        this.emailService = emailService;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     @Override
     public Admin registerAdmin(Admin admin) {
+        // Encrypt the admin password before saving to database
+        admin.setPassword(passwordEncoder.encode(admin.getPassword()));
         admin.setApproved(false);
         adminRepository.save(admin);
 
@@ -75,8 +86,8 @@ public class AdminServiceImpl implements AdminService {
             Admin admin = adminRepository.findByUsername(username)
                     .orElseThrow(() -> new RuntimeException("Admin not found!"));
 
-            // Validate password
-            if (!admin.getPassword().equals(password)) {
+            // Validate password with encrypted password in database
+            if (!passwordEncoder.matches(password, admin.getPassword())) {
                 logger.warn("Invalid credentials for admin: {}", username);
                 throw new RuntimeException("Invalid credentials.");
             }
