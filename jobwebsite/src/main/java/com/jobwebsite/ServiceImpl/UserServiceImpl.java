@@ -22,7 +22,7 @@ public class UserServiceImpl implements UserService {
     public User registerUser(User user) throws UserAlreadyExistsException {
         logger.info("Attempting to register user with username: {}", user.getUserName());
 
-        validateUser(user);
+        validateUser(user); // Assuming this method checks for validity and throws exceptions if invalid
 
         User savedUser = userRepository.save(user);
         logger.info("User registered successfully with ID: {}", savedUser.getId());
