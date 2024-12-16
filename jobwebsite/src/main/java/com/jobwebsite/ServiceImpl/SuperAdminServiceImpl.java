@@ -3,10 +3,7 @@ package com.jobwebsite.ServiceImpl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jobwebsite.Entity.*;
-import com.jobwebsite.Repository.AdminRepository;
-import com.jobwebsite.Repository.InternshipRepository;
-import com.jobwebsite.Repository.JobRepository;
-import com.jobwebsite.Repository.PendingPostRepository;
+import com.jobwebsite.Repository.*;
 import com.jobwebsite.Service.EmailService;
 import com.jobwebsite.Service.SuperAdminService;
 import jakarta.mail.MessagingException;
@@ -14,6 +11,7 @@ import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.util.List;
 
@@ -24,6 +22,9 @@ public class SuperAdminServiceImpl implements SuperAdminService {
 
     @Autowired
     private AdminRepository adminRepository;
+
+    @Autowired
+    private SuperAdminRepository superAdminRepository;
 
     @Autowired
     private JobRepository jobRepository;
@@ -37,6 +38,33 @@ public class SuperAdminServiceImpl implements SuperAdminService {
     @Autowired
     private PendingPostRepository pendingPostRepository;
 
+    private final PasswordEncoder passwordEncoder; // Inject PasswordEncoder
+
+    @Autowired
+    public SuperAdminServiceImpl(SuperAdminRepository superAdminRepository, PasswordEncoder passwordEncoder) {
+        this.superAdminRepository = superAdminRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    @Override
+    public SuperAdmin registerSuperAdmin(SuperAdmin superAdmin) {
+        // Encrypt the super admin password before saving to database
+        superAdmin.setPassword(passwordEncoder.encode(superAdmin.getPassword()));
+        return superAdminRepository.save(superAdmin);
+    }
+
+    @Override
+    public SuperAdmin loginSuperAdmin(String username, String password) {
+        SuperAdmin superAdmin = superAdminRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Super Admin not found!"));
+
+        // Validate password with encrypted password in database
+        if (!passwordEncoder.matches(password, superAdmin.getPassword())) {
+            throw new RuntimeException("Invalid credentials.");
+        }
+
+        return superAdmin; // Return super admin details upon successful login
+    }
 
     @Override
     public void approveAdmin(Long adminId) {

@@ -2,6 +2,7 @@ package com.jobwebsite.Controller;
 
 import com.jobwebsite.Entity.Admin;
 import com.jobwebsite.Entity.PendingPost;
+import com.jobwebsite.Entity.SuperAdmin;
 import com.jobwebsite.Repository.AdminRepository;
 import com.jobwebsite.Service.AdminService;
 import com.jobwebsite.Service.SuperAdminService;
@@ -12,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/superAdmin")
@@ -29,6 +31,36 @@ public class SuperAdminController {
     @Autowired
     private AdminService adminService;
 
+    @PostMapping("/registerSuperAdmin")
+    public ResponseEntity<String> registerSuperAdmin(@RequestBody SuperAdmin superAdmin) {
+        try {
+            // Call the service method to register the super admin
+            superAdminService.registerSuperAdmin(superAdmin);
+            return ResponseEntity.status(HttpStatus.CREATED).body("Super Admin registered successfully.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error during registration: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/loginSuperAdmin")
+    public ResponseEntity<Object> loginSuperAdmin(@RequestBody Map<String, String> credentials) {
+        try {
+            String username = credentials.get("username");
+            String password = credentials.get("password");
+
+            if (username == null || password == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Username and password are required.");
+            }
+
+            // Call the service method to login the super admin
+            SuperAdmin superAdmin = superAdminService.loginSuperAdmin(username, password);
+            return ResponseEntity.ok(superAdmin); // Return super admin details on successful login
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error during login: " + e.getMessage());
+        }
+    }
 
     @PostMapping("/approveAdmin/{id}")
     public ResponseEntity<String> approveAdmin(@PathVariable Long id) {
