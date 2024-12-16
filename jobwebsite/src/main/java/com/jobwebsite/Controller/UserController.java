@@ -22,16 +22,18 @@ public class UserController {
     private UserService userService;
 
     @PostMapping("/user/register")
-    public ResponseEntity<String> registerUser(@RequestBody User user) {
+    public ResponseEntity<?> registerUser(@RequestBody User user) {
         try {
             if (user.getUserName() == null || user.getPassword() == null || user.getEmailId() == null) {
                 logger.error("Invalid registration details provided");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid registration details provided.");
             }
-            
-            userService.registerUser(user);
+
+            User registeredUser = userService.registerUser(user);
             logger.info("User registered successfully with username: {}", user.getUserName());
-            return ResponseEntity.status(HttpStatus.CREATED).body("User registered successfully.");
+
+            // Returning the registered user data in the response
+            return ResponseEntity.status(HttpStatus.CREATED).body(registeredUser);
         } catch (UserAlreadyExistsException | IllegalArgumentException e) {
             logger.error("User registration failed: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());

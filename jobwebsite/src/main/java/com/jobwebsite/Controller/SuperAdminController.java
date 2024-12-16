@@ -29,6 +29,7 @@ public class SuperAdminController {
     @Autowired
     private AdminService adminService;
 
+
     @PostMapping("/approveAdmin/{id}")
     public ResponseEntity<String> approveAdmin(@PathVariable Long id) {
         try {

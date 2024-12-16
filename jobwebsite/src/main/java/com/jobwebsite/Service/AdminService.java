@@ -1,14 +1,11 @@
 package com.jobwebsite.Service;
 
-
 import com.jobwebsite.Entity.Admin;
 import com.jobwebsite.Entity.Form;
 import com.jobwebsite.Entity.Internship;
 import com.jobwebsite.Entity.Job;
-import com.jobwebsite.Exception.AdminNotFoundException;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.util.List;
 
 public interface AdminService {
