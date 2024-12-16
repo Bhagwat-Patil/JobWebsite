@@ -44,15 +44,20 @@ public class UserController {
     }
 
     @PostMapping("/user/login")
-    public ResponseEntity<String> loginUser(@RequestBody User user)  {
+    public ResponseEntity<?> loginUser(@RequestBody User user) {
         try {
+            // Validating login credentials
             if (user.getUserName().isEmpty() || user.getPassword().isEmpty()) {
                 logger.error("Invalid login credentials provided");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid login credentials.");
             }
-            userService.loginUser(user.getUserName(), user.getPassword());
+
+            // Attempt to login the user
+            User loggedInUser = userService.loginUser(user.getUserName(), user.getPassword());
             logger.info("User logged in successfully with username: {}", user.getUserName());
-            return ResponseEntity.ok("Login successful.");
+
+            // Returning the logged-in user data in the response
+            return ResponseEntity.ok(loggedInUser);
         } catch (InvalidCredentialsException e) {
             logger.error("User login failed: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
@@ -61,6 +66,7 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Login failed.");
         }
     }
+
 
     @PutMapping("/user/update/{id}")
     public ResponseEntity<String> updateUser(@PathVariable Long id, @RequestBody User user) {
