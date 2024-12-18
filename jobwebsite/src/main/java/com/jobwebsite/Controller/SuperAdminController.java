@@ -62,6 +62,30 @@ public class SuperAdminController {
         }
     }
 
+    @PutMapping("/updateSuperAdmin/{id}")
+    public ResponseEntity<Object> updateSuperAdmin(@PathVariable Long id, @RequestBody SuperAdmin updatedDetails) {
+        try {
+            SuperAdmin updatedSuperAdmin = superAdminService.updateSuperAdmin(id, updatedDetails);
+            return ResponseEntity.ok(updatedSuperAdmin); // Return updated Super Admin
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error during update: " + e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/deleteSuperAdmin/{id}")
+    public ResponseEntity<String> deleteSuperAdmin(@PathVariable Long id) {
+        try {
+            superAdminService.deleteSuperAdmin(id);
+            return ResponseEntity.ok("Super Admin with ID " + id + " deleted successfully.");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error during deletion: " + e.getMessage());
+        }
+    }
+
     @PostMapping("/approveAdmin/{id}")
     public ResponseEntity<String> approveAdmin(@PathVariable Long id) {
         try {

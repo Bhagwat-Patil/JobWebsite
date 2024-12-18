@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.util.List;
 
 @Entity
@@ -47,4 +46,5 @@ public class Admin {
     @OneToMany(mappedBy = "admin")
     @JsonManagedReference  // Serialize this side of the relationship
     private List<Internship> internships;
+
 }

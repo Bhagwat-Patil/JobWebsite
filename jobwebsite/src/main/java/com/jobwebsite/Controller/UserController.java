@@ -1,9 +1,13 @@
 package com.jobwebsite.Controller;
 
+import com.jobwebsite.Entity.PasswordResetRequest;
 import com.jobwebsite.Entity.User;
-import com.jobwebsite.Exception.InvalidCredentialsException;
 import com.jobwebsite.Exception.UserAlreadyExistsException;
+import com.jobwebsite.Exception.UserNotFoundException;
+import com.jobwebsite.Repository.ForgotPasswordOtpRepository;
+import com.jobwebsite.Service.EmailService;
 import com.jobwebsite.Service.UserService;
+import com.jobwebsite.ServiceImpl.ForgotPasswordService;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
@@ -21,51 +25,38 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private EmailService emailService;
+
+    @Autowired
+    private ForgotPasswordOtpRepository otpRepository;
+
+    @Autowired
+    private ForgotPasswordService forgotPasswordService;
+
     @PostMapping("/user/register")
-    public ResponseEntity<String> registerUser(@RequestBody User user) {
+    public ResponseEntity<?> registerUser(@RequestBody User user) {
         try {
-            if (user.getUserName() == null || user.getPassword() == null || user.getEmailId() == null) {
-                logger.error("Invalid registration details provided");
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid registration details provided.");
-            }
-
-            // Register the user with encrypted password
-            userService.registerUser(user);
-            logger.info("User registered successfully with username: {}", user.getUserName());
-            return ResponseEntity.status(HttpStatus.CREATED).body("User registered successfully.");
-        } catch (UserAlreadyExistsException | IllegalArgumentException e) {
-            logger.error("User registration failed: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        } catch (Exception e) {
-            logger.error("An unexpected error occurred during registration", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Registration failed.");
+            logger.info("Register endpoint called.");
+            User registeredUser = userService.registerUser(user);
+            return ResponseEntity.ok(registeredUser);
+        } catch (RuntimeException ex) {
+            logger.error("Error during registration: {}", ex.getMessage());
+            return ResponseEntity.badRequest().body(ex.getMessage());
         }
     }
 
-    @PostMapping("/user/login")
-    public ResponseEntity<?> loginUser(@RequestBody User user) {
+    @PostMapping("/login")
+    public ResponseEntity<User> loginUser(@RequestBody User user) {
+        logger.info("Login request received for username: {}", user.getUserName());
         try {
-            // Validating login credentials
-            if (user.getUserName().isEmpty() || user.getPassword().isEmpty()) {
-                logger.error("Invalid login credentials provided");
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid login credentials.");
-            }
-
-            // Attempt to login the user
             User loggedInUser = userService.loginUser(user.getUserName(), user.getPassword());
-            logger.info("User logged in successfully with username: {}", user.getUserName());
-
-            // Returning the logged-in user data in the response
             return ResponseEntity.ok(loggedInUser);
-        } catch (InvalidCredentialsException e) {
-            logger.error("User login failed: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
-        } catch (Exception e) {
-            logger.error("An unexpected error occurred during login", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Login failed.");
+        } catch (RuntimeException e) {
+            logger.error("Login failed: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
         }
     }
-
 
     @PutMapping("/user/update/{id}")
     public ResponseEntity<String> updateUser(@PathVariable Long id, @RequestBody User user) {
@@ -125,6 +116,60 @@ public class UserController {
         } catch (Exception e) {
             logger.error("Error in fetching Users with status {}: {}", status, e.getMessage(), e);
             throw e;
+        }
+    }
+
+    //********************** Forgot Password ********************************
+
+    @PostMapping("/user/forgotPassword/{userEmail}")
+    public ResponseEntity<String> forgotPassword(@PathVariable String userEmail) {
+        logger.info("Received the request to reset password for email: {}", userEmail);
+        try {
+            // Step 1: Request OTP for password reset
+            forgotPasswordService.requestPasswordReset(userEmail); // OTP will be sent internally
+            return ResponseEntity.ok("Password reset OTP has been sent to your email.");
+        } catch (UserNotFoundException e) {
+            logger.error("User not found with email: {}", userEmail);
+            return ResponseEntity.status(404).body("User not found with email: " + userEmail);
+        } catch (Exception e) {
+            logger.error("An error occurred while processing the password reset request for email: {}", userEmail, e);
+            return ResponseEntity.status(500).body("An unexpected error occurred.");
+        }
+    }
+
+    @PostMapping("/user/resetPassword/{userEmail}")
+    public ResponseEntity<String> resetPassword(@PathVariable("userEmail") String userEmail,
+                                                @RequestBody PasswordResetRequest request) {
+        String password = request.getPassword();
+        String confirmPassword = request.getConfirmPassword();
+        String otp = request.getOtp();
+
+        logger.info("Received request to reset password for email: {}", userEmail);
+
+        // Step 1: Check if passwords match
+        if (!password.equals(confirmPassword)) {
+            logger.error("Passwords do not match for email: {}", userEmail);
+            return ResponseEntity.status(400).body("Passwords do not match");
+        }
+
+        try {
+            // Step 2: Verify OTP and reset password in a single transaction
+            boolean isOtpValid = forgotPasswordService.verifyOtp(otp, userEmail);
+
+            if (!isOtpValid) {
+                logger.error("Invalid or expired OTP: {} for email: {}", otp, userEmail);
+                return ResponseEntity.status(400).body("Invalid or expired OTP");
+            }
+
+            forgotPasswordService.resetPassword(userEmail, password);
+            logger.info("Password successfully reset for email: {}", userEmail);
+            return ResponseEntity.ok("Password successfully reset");
+        } catch (UserNotFoundException e) {
+            logger.error("No account found for email: {}", userEmail, e);
+            return ResponseEntity.status(404).body("No account found for email: " + userEmail);
+        } catch (Exception e) {
+            logger.error("An error occurred while resetting password for email: {}", userEmail, e);
+            return ResponseEntity.status(500).body("An unexpected error occurred.");
         }
     }
 

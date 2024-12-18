@@ -25,8 +25,7 @@ public class User {
     @NotNull
     private String fullName;
 
-    @NotNull
-    @Column(unique = true)
+    @Column(name = "email_id", nullable = false, unique = true)
     private String emailId;
 
     @NotNull
@@ -52,4 +51,8 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     @JsonManagedReference(value = "user-payments")
     private List<Payment> payments;
+
+    @OneToOne
+    @Transient
+    private ForgotPasswordOtp forgotPasswordOtp;
 }

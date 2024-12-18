@@ -12,6 +12,12 @@ public interface SuperAdminService {
 
     SuperAdmin loginSuperAdmin(String username, String password);
 
+    @Transactional
+    SuperAdmin updateSuperAdmin(Long id, SuperAdmin updatedDetails);
+
+    @Transactional
+    void deleteSuperAdmin(Long id);
+
     void approveAdmin(Long adminId);
     Admin disableAdmin(Long adminId);
 

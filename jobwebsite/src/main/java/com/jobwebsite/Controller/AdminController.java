@@ -1,14 +1,11 @@
 package com.jobwebsite.Controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jobwebsite.Entity.*;
 import com.jobwebsite.Exception.*;
 import com.jobwebsite.Repository.AdminRepository;
-import com.jobwebsite.Service.AdminService;
-import com.jobwebsite.Service.InternshipService;
-import com.jobwebsite.Service.MockInterviewService;
-import com.jobwebsite.Service.PlacementService;
+import com.jobwebsite.Repository.ForgotPasswordOtpRepository;
+import com.jobwebsite.Service.*;
+import com.jobwebsite.ServiceImpl.ForgotPasswordService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.Map;
 
@@ -41,6 +37,15 @@ public class AdminController {
 
     @Autowired
     private MockInterviewService mockInterviewService;
+
+    @Autowired
+    private ForgotPasswordOtpRepository otpRepository;  // Repository for OTPs
+
+    @Autowired
+    private EmailService emailService;
+
+    @Autowired
+    private ForgotPasswordService forgotPasswordService;
 
     @PostMapping("/registerAdmin")
     public String registerAdmin(@RequestBody Admin admin) {
@@ -72,31 +77,23 @@ public class AdminController {
         }
     }
 
-
     @PutMapping("/updateAdmin/{adminId}")
     public ResponseEntity<?> updateAdmin(
             @PathVariable Long adminId,
-            @RequestPart("adminData") String adminData,
-            @RequestPart(value = "profilePicture", required = false) MultipartFile profilePicture) {
+            @RequestBody @Valid Admin adminDetails) {
+
+        logger.info("Received request to update admin with ID: {}", adminId);
 
         try {
-            // Convert JSON string to Admin object
-            ObjectMapper objectMapper = new ObjectMapper();
-            Admin adminDetails = objectMapper.readValue(adminData, Admin.class);
-
-            // Update the admin
-            Admin updatedAdmin = adminService.updateAdmin(adminId, adminDetails, profilePicture);
-
-            // Return the updated admin
+            // Call the service method to update the admin
+            Admin updatedAdmin = adminService.updateAdmin(adminId, adminDetails);
             return ResponseEntity.ok(updatedAdmin);
 
         } catch (AdminNotFoundException e) {
+            logger.error("Admin with ID {} not found: {}", adminId, e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        } catch (JsonProcessingException e) {
-            logger.error("Failed to parse admin data: {}", e.getMessage(), e);
-            return ResponseEntity.badRequest().body("Invalid admin data format");
         } catch (Exception e) {
-            logger.error("An unexpected error occurred: {}", e.getMessage(), e);
+            logger.error("An unexpected error occurred while updating admin with ID {}: {}", adminId, e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("An unexpected error occurred: " + e.getMessage());
         }
@@ -422,5 +419,62 @@ public class AdminController {
             return ResponseEntity.status(404).body("Failed to delete MockInterview with ID: " + id);
         }
     }
+
+    //********************* Forgot Password *************************
+
+    @PostMapping("/admin/forgotPassword/{email}")
+    public ResponseEntity<String> forgotPassword(@PathVariable String email) {
+        logger.info("Received request for password reset for email: {}", email);
+        try {
+            // Call the service method to generate OTP for the given email
+            String otp = forgotPasswordService.requestPasswordReset(email);
+
+            // Send OTP to the admin's email
+            emailService.sendEmail(email, "Password Reset OTP", "Your OTP for password reset is: " + otp);
+            return ResponseEntity.ok("Password reset OTP has been sent to your email.");
+        } catch (AdminNotFoundException e) {
+            logger.error("Admin not found with this email: {}", email);
+            return ResponseEntity.status(404).body("Admin not found with email: " + email);
+        } catch (Exception e) {
+            logger.error("An error occurred while processing the password reset request for email: {}", email, e);
+            return ResponseEntity.status(500).body("An unexpected error occurred.");
+        }
+    }
+
+    @PostMapping("/admin/resetPassword/{email}")
+    public ResponseEntity<String> resetPassword(
+            @PathVariable("email") String email,
+            @Valid @RequestBody PasswordResetRequest request) {
+        String password = request.getPassword();
+        String confirmPassword = request.getConfirmPassword();
+        String otp = request.getOtp();
+
+        logger.info("Received request to reset password for email: {}", email);
+
+        if (!password.equals(confirmPassword)) {
+            logger.error("Passwords do not match for email: {}", email);
+            return ResponseEntity.status(400).body("Passwords do not match");
+        }
+
+        try {
+            // Validate OTP and reset password in one step
+            boolean isValidOtp = forgotPasswordService.verifyOtp(otp, email);
+            if (!isValidOtp) {
+                logger.error("Invalid or expired OTP: {} for email: {}", otp, email);
+                return ResponseEntity.status(400).body("Invalid or expired OTP");
+            }
+
+            // Reset the password
+            forgotPasswordService.resetPassword(email, password);
+            return ResponseEntity.ok("Password successfully reset.");
+        } catch (AdminNotFoundException e) {
+            logger.error("Admin not found with email: {}", email);
+            return ResponseEntity.status(404).body("Admin not found with email: " + email);
+        } catch (Exception e) {
+            logger.error("An error occurred while resetting password for email: {}", email, e);
+            return ResponseEntity.status(500).body("An unexpected error occurred.");
+        }
+    }
+
 }
 

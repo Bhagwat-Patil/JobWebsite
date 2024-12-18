@@ -67,6 +67,53 @@ public class SuperAdminServiceImpl implements SuperAdminService {
     }
 
     @Override
+    @Transactional
+    public SuperAdmin updateSuperAdmin(Long id, SuperAdmin updatedDetails) {
+        logger.info("Attempting to update Super Admin with ID: {}", id);
+
+        // Retrieve existing Super Admin
+        SuperAdmin existingSuperAdmin = superAdminRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Super Admin with ID " + id + " not found."));
+
+        // Update fields if they are not null and valid
+        if (updatedDetails.getSuperAdminName() != null && !updatedDetails.getSuperAdminName().isEmpty()) {
+            existingSuperAdmin.setSuperAdminName(updatedDetails.getSuperAdminName());
+        }
+        if (updatedDetails.getUsername() != null && !updatedDetails.getUsername().isEmpty()) {
+            existingSuperAdmin.setUsername(updatedDetails.getUsername());
+        }
+        if (updatedDetails.getEmail() != null && !updatedDetails.getEmail().isEmpty()) {
+            existingSuperAdmin.setEmail(updatedDetails.getEmail());
+        }
+        if (updatedDetails.getPassword() != null && !updatedDetails.getPassword().isEmpty()) {
+            // Encrypt the new password
+            String encryptedPassword = passwordEncoder.encode(updatedDetails.getPassword());
+            existingSuperAdmin.setPassword(encryptedPassword);
+        }
+
+        // Save the updated Super Admin
+        SuperAdmin updatedSuperAdmin = superAdminRepository.save(existingSuperAdmin);
+        logger.info("Successfully updated Super Admin with ID: {}", id);
+
+        return updatedSuperAdmin;
+    }
+
+    @Override
+    @Transactional
+    public void deleteSuperAdmin(Long id) {
+        logger.info("Attempting to delete Super Admin with ID: {}", id);
+
+        // Check if the Super Admin exists
+        SuperAdmin existingSuperAdmin = superAdminRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Super Admin with ID " + id + " not found."));
+
+        // Delete the Super Admin
+        superAdminRepository.delete(existingSuperAdmin);
+        logger.info("Successfully deleted Super Admin with ID: {}", id);
+    }
+
+
+    @Override
     public void approveAdmin(Long adminId) {
         Admin admin = adminRepository.findById(adminId)
                 .orElseThrow(() -> new RuntimeException("Admin not found"));

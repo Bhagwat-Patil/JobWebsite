@@ -17,7 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -42,9 +41,13 @@ public class AdminServiceImpl implements AdminService {
     private EmailService emailService;
 
     @Autowired
+    private ForgotPasswordOtpRepository otpRepository;
+
+    @Autowired
     private PendingPostRepository pendingPostRepository;
 
     private final PasswordEncoder passwordEncoder; // Inject PasswordEncoder
+
 
     @Autowired
     public AdminServiceImpl(AdminRepository adminRepository, EmailService emailService, PasswordEncoder passwordEncoder) {
@@ -111,10 +114,9 @@ public class AdminServiceImpl implements AdminService {
         }
     }
 
-
     @Override
     @Transactional
-    public Admin updateAdmin(Long adminId, Admin adminDetails, MultipartFile profilePicture) {
+    public Admin updateAdmin(Long adminId, Admin adminDetails) {
         logger.info("Updating admin by id: {}, data: {}", adminId, adminDetails);
 
         // Retrieve the existing admin
@@ -132,16 +134,20 @@ public class AdminServiceImpl implements AdminService {
             existingAdmin.setUsername(adminDetails.getUsername());
         }
         if (adminDetails.getPassword() != null && ValidationClass.PASSWORD_PATTERN.matcher(adminDetails.getPassword()).matches()) {
-            existingAdmin.setPassword(adminDetails.getPassword());
+            // Encrypt the password before updating
+            String encodedPassword = passwordEncoder.encode(adminDetails.getPassword());
+            existingAdmin.setPassword(encodedPassword);
         }
         if (adminDetails.getEmail() != null && ValidationClass.EMAIL_PATTERN.matcher(adminDetails.getEmail()).matches()) {
             existingAdmin.setEmail(adminDetails.getEmail());
         }
+
         // Save the updated admin
         Admin updatedAdmin = adminRepository.save(existingAdmin);
         logger.info("Successfully updated admin with id: {}", adminId);
         return updatedAdmin;
     }
+
 
     @Override
     public void deleteAdmin(Long adminId) {
