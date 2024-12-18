@@ -4,6 +4,7 @@ import com.jobwebsite.Entity.Internship;
 import com.jobwebsite.Entity.User;
 import com.jobwebsite.Exception.InvalidCredentialsException;
 import com.jobwebsite.Exception.UserAlreadyExistsException;
+import com.jobwebsite.Exception.UserNotFoundException;
 
 import java.util.List;
 
@@ -15,4 +16,5 @@ public interface UserService {
     List<User> getAllUsers();
     User getUserById(Long id);
     List<User> getUserByStatus(String status);
+
 }
